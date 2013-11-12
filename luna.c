@@ -155,9 +155,6 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 		case SDLK_AMPERSAND:
 			lua_pushliteral(L,"&");
 			break;
-		case SDLK_APOSTROPHE:
-			lua_pushliteral(L,"'");
-			break;
 		case SDLK_ASTERISK:
 			lua_pushliteral(L,"*");
 			break;
@@ -166,6 +163,9 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 			break;
 		case SDLK_BACKSLASH:
 			lua_pushliteral(L,"\\");
+			break;
+		case SDLK_BACKQUOTE:
+			lua_pushliteral(L,"`");
 			break;
 		case SDLK_CARET:
 			lua_pushliteral(L,"^");
@@ -181,9 +181,6 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 			break;
 		case SDLK_EXCLAIM:
 			lua_pushliteral(L,"!");
-			break;
-		case SDLK_GRAVE:
-			lua_pushliteral(L,"`");
 			break;
 		case SDLK_GREATER:
 			lua_pushliteral(L,">");
@@ -214,6 +211,9 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 			break;
 		case SDLK_QUESTION:
 			lua_pushliteral(L,"?");
+			break;
+		case SDLK_QUOTE:
+			lua_pushliteral(L,"'");
 			break;
 		case SDLK_QUOTEDBL:
 			lua_pushliteral(L,"\"");
@@ -511,7 +511,7 @@ static void lh_luna_make_key_event(lua_State *L, SDL_Event *e)
 	lua_setfield(L,-2,"state");
 
 	// set keysym info. It gets ugly here, so we're using a helper fn.
-	lh_luna_set_keycode(L,e->key->keysym);
+	lh_luna_set_keycode(L,&e->key.keysym);
 }
 
 static void lh_luna_make_mouse_motion_event(lua_State *L, SDL_Event *e)
@@ -698,8 +698,7 @@ static const luaL_Reg l_luna_module_fns[] = {
 	{"init", &l_luna_init},
 	{"quit", &l_luna_quit},
 	{NULL,NULL}
-}
-
+};
 
 
 int luaopen_luna(lua_State *L)
