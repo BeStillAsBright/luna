@@ -10,7 +10,6 @@
 #include <SDL2/SDL.h>
 
 // Metatable defines
-static const char *EVENTMETA = "luna:event";
 
 
 // use for userdata for window object; it's easier to keep them both in one
@@ -491,6 +490,10 @@ static void lh_luna_make_key_event(lua_State *L, SDL_Event *e)
 	}
 	lua_setfield(L,-2,"type");
 
+	// add "window_id" field
+	lua_pushinteger(L,e->key.windowID);
+	lua_setfield(L,-2,"window_id");
+
 	// add "timestamp" field
 	lua_pushinteger(L, e->key.timestamp);
 	lua_setfield(L,-2,"timestamp");
@@ -511,6 +514,149 @@ static void lh_luna_make_key_event(lua_State *L, SDL_Event *e)
 	lh_luna_set_keycode(L,e->key->keysym);
 }
 
+static void lh_luna_make_mouse_motion_event(lua_State *L, SDL_Event *e)
+{
+	// the event table to be returned
+	lua_newtable(L);
+
+	// add type field
+	lua_pushliteral(L,"mouse_motion");
+	lua_setfield(L,-2,"type");
+
+	// add timestamp
+	lua_pushinteger(L,e->motion.timestamp);
+	lua_setfield(L,-2,"timestamp");
+
+	// add window_id
+	lua_pushinteger(L,e->motion.windowID);
+	lua_setfield(L,-2,"window_id");
+
+	// add is_touch field
+	int istouch = (e->motion.which == SDL_TOUCH_MOUSEID);
+	lua_pushboolean(L,istouch);
+	lua_setfield(L,-2,"is_touch");
+
+	// set state table fields (event.buttons)
+	lua_newtable(L); // table for event.buttons
+	int left = (e->motion.state & SDL_BUTTON_LMASK);
+	int middle = (e->motion.state & SDL_BUTTON_MMASK);
+	int right = (e->motion.state & SDL_BUTTON_RMASK);
+	int x1 = (e->motion.state & SDL_BUTTON_X1MASK);
+	int x2 = (e->motion.state & SDL_BUTTON_X2MASK);
+	lua_pushboolean(L,left);
+	lua_setfield(L,-2,"left");
+	lua_pushboolean(L,middle);
+	lua_setfield(L,-2,"middle");
+	lua_pushboolean(L,right);
+	lua_setfield(L,-2,"right");
+	lua_pushboolean(L,x1);
+	lua_setfield(L,-2,"x1");
+	lua_pushboolean(L,x2);
+	lua_setfield(L,-2,"x2");
+	lua_setfield(L,-2,"buttons"); // set event.buttons
+
+	// set x field
+	lua_pushinteger(L,e->motion.x);
+	lua_setfield(L,-2,"x");
+
+	// set y field
+	lua_pushinteger(L, e->motion.y);
+	lua_setfield(L,-2,"y");
+
+	// set x_rel field
+	lua_pushinteger(L, e->motion.xrel);
+	lua_setfield(L,-2,"x_rel");
+	
+	// set y_rel field
+	lua_pushinteger(L, e->motion.yrel);
+	lua_setfield(L,-2,"y_rel");
+}
+
+static void lh_luna_make_mouse_button_event(lua_State *L, SDL_Event *e)
+{
+	// push our table to return
+	lua_newtable(L);
+
+	// set type field
+	if (e->type == SDL_MOUSEBUTTONDOWN) {
+		lua_pushliteral(L,"mouse_down");
+	} else {
+		lua_pushliteral(L,"mouse_up");
+	}
+	lua_setfield(L,-2,"type");
+
+	// set timestamp
+	lua_pushinteger(L,e->button.timestamp);
+	lua_setfield(L,-2,"timestamp");
+
+	// window_id
+	lua_pushinteger(L,e->button.windowID);
+	lua_setfield(L,-2,"window_id");
+
+	// is_touch
+	int istouch = (e->button.which == SDL_TOUCH_MOUSEID);
+	lua_pushboolean(L,istouch);
+	lua_setfield(L,-2,"is_touch");
+
+	// set button field
+	switch (e->button.button) {
+		case SDL_BUTTON_LEFT:
+			lua_pushliteral(L,"left");
+			break;
+		case SDL_BUTTON_MIDDLE:
+			lua_pushliteral(L,"middle");
+			break;
+		case SDL_BUTTON_RIGHT:
+			lua_pushliteral(L,"right");
+			break;
+		case SDL_BUTTON_X1:
+			lua_pushliteral(L,"x1");
+			break;
+		case SDL_BUTTON_X2:
+			lua_pushliteral(L,"x2");
+			break;
+	}
+	lua_setfield(L,-2,"button");
+
+	// set state field
+	if (e->button.state == SDL_PRESSED) {
+		lua_pushliteral(L,"pressed");
+	} else {
+		lua_pushliteral(L,"released");
+	}
+	lua_setfield(L,-2,"state");
+	
+	// x field
+	lua_pushinteger(L,e->button.x);
+	lua_setfield(L,-2,"x");
+	
+	// y field
+	lua_pushinteger(L,e->button.y);
+	lua_setfield(L,-2,"y");
+}
+
+static void lh_luna_make_mouse_wheel_event(lua_State *L, SDL_Event *e)
+{
+	lua_newtable(L);
+	
+	// timestamp
+	lua_pushinteger(L, e->wheel.timestamp);
+	lua_setfield(L,-2,"timestamp");
+	// window_id
+	lua_pushinteger(L, e->wheel.windowID);
+	lua_setfield(L,-2,"window_id");
+	// is_touch
+	int istouch = (e->wheel.which == SDL_TOUCH_MOUSEID);
+	lua_pushboolean(L,istouch);
+	lua_setfield(L,-2,"is_touch");
+	// x
+	lua_pushinteger(L,e->wheel.x);
+	lua_setfield(L,-2,"x");
+	// y
+	lua_pushinteger(L,e->wheel.y);
+	lua_setfield(L,-2,"y");
+}
+
 static int l_luna_event_poll(lua_State *L)
 {
 	SDL_Event event;
@@ -518,12 +664,33 @@ static int l_luna_event_poll(lua_State *L)
 	// push a table to use as our return value
 	switch (event.type) {
 		case SDL_KEYDOWN:
+			lua_pushliteral(L,"key_down");
+			lh_luna_make_key_event(L,&event);
+			break;
 		case SDL_KEYUP:
+			lua_pushliteral(L,"key_up");
 			lh_luna_make_key_event(L, &event);
+			break;
+		case SDL_MOUSEMOTION:
+			lua_pushliteral(L,"mouse_motion");
+			lh_luna_make_mouse_motion_event(L,&event);
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			lua_pushliteral(L,"mouse_down");
+			lh_luna_make_mouse_button_event(L,&event);
+			break;
+		case SDL_MOUSEBUTTONUP:
+			lua_pushliteral(L,"mouse_up");
+			lh_luna_make_mouse_button_event(L,&event);
+			break;
+		case SDL_MOUSEWHEEL:
+			lua_pushliteral(L,"mouse_wheel");
+			lh_luna_make_mouse_wheel_event(L,&event);
 			break;
 		default:
 			break;
 	}
+	return 2; // return type, event_table
 }
 
 // module defs
