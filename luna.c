@@ -51,7 +51,7 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 		case SDLK_3:
 			lua_pushliteral(L,"3");
 			break;
-		case SDK_4:
+		case SDLK_4:
 			lua_pushliteral(L,"4");
 			break;
 		case SDLK_5:
@@ -355,14 +355,14 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 		case SDLK_KP_MINUS:
 			lua_pushliteral(L,"kp-");
 			break;
-		case SDL_KP_MULTIPLY:
+		case SDLK_KP_MULTIPLY:
 			lua_pushliteral(L,"kp*");
 			break;
 		case SDLK_KP_PLUS:
 			lua_pushliteral(L,"kp+");
 			break;
 		// navigation keys
-		case SDL_DOWN:
+		case SDLK_DOWN:
 			lua_pushliteral(L,"down");
 			break;
 		case SDLK_LEFT:
@@ -393,7 +393,7 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 		case SDLK_CLEAR:
 			lua_pushliteral(L,"clear");
 			break;
-		case SDL_DELETE:
+		case SDLK_DELETE:
 			lua_pushliteral(L,"delete");
 			break;
 		case SDLK_INSERT:
