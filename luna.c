@@ -657,12 +657,163 @@ static void lh_luna_make_mouse_wheel_event(lua_State *L, SDL_Event *e)
 	lua_setfield(L,-2,"y");
 }
 
+static void lh_luna_make_controller_axis_event(lua_State *L, SDL_Event *e)
+{
+	// event table
+	lua_newtable(L);
+
+	// event type
+	lua_pushliteral(L,"controller_axis");
+	lua_setfield(L,-2,"type");
+
+	// timestamp
+	lua_pushinteger(L,e->caxis.timestamp);
+	lua_setfield(L,-2,"timestamp");
+
+	// controller_id
+	lua_pushinteger(L,e->caxis.which);
+	lua_setfield(L,-2,"controller_id");
+
+	// axis
+	switch (e->caxis.axis) {
+		case SDL_CONTROLLER_AXIS_LEFTX:
+			lua_pushliteral(L,"left_x");
+			break;
+		case SDL_CONTROLLER_AXIS_LEFTY:
+			lua_pushliteral(L,"left_y");
+			break;
+		case SDL_CONTROLLER_AXIS_RIGHTX:
+			lua_pushliteral(L,"right_x");
+			break;
+		case SDL_CONTROLLER_AXIS_RIGHTY:
+			lua_pushliteral(L,"right_y");
+			break;
+		case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+			lua_pushliteral(L,"left_trigger");
+			break;
+		case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+			lua_pushliteral(L,"right_trigger");
+			break;
+	}
+	lua_setfield(L,-2,"axis");
+
+	// value:
+	lua_pushinteger(L,e->caxis.value);
+	lua_setfield(L,-2,"value");
+}
+
+static void lh_luna_make_controller_button_event(lua_State *L, SDL_Event *e)
+{
+	// table
+	lua_newtable(L);
+
+	// type
+	if (e->cbutton.type == SDL_CONTROLLERBUTTONDOWN) {
+		lua_pushliteral(L,"controller_button_down");
+	} else {
+		lua_pushliteral(L,"controller_button_up");
+	}
+	lua_setfield(L,-2,"type");
+
+	// timestamp
+	lua_pushinteger(L,e->cbutton.timestamp);
+	lua_setfield(L,-2,"timestamp");
+
+	// controller_id
+	lua_pushinteger(L,e->cbutton.which);
+	lua_setfield(L,-2,"controller_id");
+
+	// button
+	switch (e->cbutton.button) {
+		case SDL_CONTROLLER_BUTTON_A:
+			lua_pushliteral(L,"a");
+			break;
+		case SDL_CONTROLLER_BUTTON_B:
+			lua_pushliteral(L,"b");
+			break;
+		case SDL_CONTROLLER_BUTTON_X:
+			lua_pushliteral(L,"x");
+			break;
+		case SDL_CONTROLLER_BUTTON_Y:
+			lua_pushliteral(L,"y");
+			break;
+		case SDL_CONTROLLER_BUTTON_BACK:
+			lua_pushliteral(L,"back");
+			break;
+		case SDL_CONTROLLER_BUTTON_GUIDE:
+			lua_pushliteral(L,"guide");
+			break;
+		case SDL_CONTROLLER_BUTTON_START:
+			lua_pushliteral(L,"start");
+			break;
+		case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+			lua_pushliteral(L,"left_stick");
+			break;
+		case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
+			lua_pushliteral(L,"right_stick");
+			break;
+		case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+			lua_pushliteral(L,"left_shoulder");
+			break;
+		case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+			lua_pushliteral(L,"right_shoulder");
+			break;
+		case SDL_CONTROLLER_BUTTON_DPAD_UP:
+			lua_pushliteral(L,"dpad_up");
+			break;
+		case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+			lua_pushliteral(L,"dpad_down");
+			break;
+		case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+			lua_pushliteral(L,"dpad_left");
+			break;
+		case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+			lua_pushliteral(L,"dpad_right");
+			break;
+	}
+	lua_setfield(L,-2,"button");
+
+	// state
+	if (e->cbutton.state == SDL_PRESSED) {
+		lua_pushliteral(L,"pressed");
+	} else {
+		lua_pushliteral(L,"released");
+	}
+	lua_setfield(L,-2,"state");
+}
+
+static void lh_luna_make_controller_device_event(lua_State *L, SDL_Event *e)
+{
+	lua_newtable(L);
+	switch (e->type) {
+		case SDL_CONTROLLERDEVICEADDED:
+			lua_pushliteral(L,"controller_added");
+			break;
+		case SDL_CONTROLLERDEVICEMAPPED:
+			lua_pushliteral(L,"controller_mapped");
+			break;
+		case SDL_CONTROLLERDEVICEREMOVED:
+			lua_pushliteral(L,"controller_removed");
+			break;
+	}
+	lua_setfield(L,-2,"type");
+	
+	// timestamp
+	lua_pushinteger(e->cdevice.timestamp);
+	lua_setfield(L,-2,"timestamp");
+	
+	// controller_id
+	lua_pushinteger(e->cdevice.which);
+	lua_setfield(L,-2,"controller_id");
+}
+
 static int l_luna_event_poll(lua_State *L)
 {
 	SDL_Event event;
 	SDL_PollEvent(&event);
 	// push a table to use as our return value
 	switch (event.type) {
+		// keyboard events
 		case SDL_KEYDOWN:
 			lua_pushliteral(L,"key_down");
 			lh_luna_make_key_event(L,&event);
@@ -671,6 +822,7 @@ static int l_luna_event_poll(lua_State *L)
 			lua_pushliteral(L,"key_up");
 			lh_luna_make_key_event(L, &event);
 			break;
+		// mouse events
 		case SDL_MOUSEMOTION:
 			lua_pushliteral(L,"mouse_motion");
 			lh_luna_make_mouse_motion_event(L,&event);
@@ -686,6 +838,31 @@ static int l_luna_event_poll(lua_State *L)
 		case SDL_MOUSEWHEEL:
 			lua_pushliteral(L,"mouse_wheel");
 			lh_luna_make_mouse_wheel_event(L,&event);
+			break;
+		// controller events
+		case SDL_CONTROLLERAXISMOTION:
+			lua_pushliteral(L,"controller_axis");
+			lh_luna_make_controller_axis_event(L,&event);
+			break;
+		case SDL_CONTROLLERBUTTONDOWN:
+			lua_pushliteral(L,"controller_button_down");
+			lh_luna_make_controller_button_event(L,&event);
+			break;
+		case SDL_CONTROLLERBUTTONUP:
+			lua_pushliteral(L,"controller_button_up");
+			lh_luna_make_controller_button_event(L,&event);
+			break;
+		case SDL_CONTROLLERDEVICEADDED:
+			lua_pushliteral(L,"controller_added");
+			lh_luna_make_controller_device_event(L,&event);
+			break;
+		case SDL_CONTROLLERDEVICEREMOVED:
+			lua_pushliteral(L,"controller_removed");
+			lh_luna_make_controller_device_event(L,&event);
+			break;
+		case SDL_CONTROLLERDEVICEMAPPED:
+			lua_pushliteral(L,"controller_mapped");
+			lh_luna_make_controller_device_event(L,&event);
 			break;
 		default:
 			break;
