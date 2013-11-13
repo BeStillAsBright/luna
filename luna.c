@@ -789,8 +789,8 @@ static void lh_luna_make_controller_device_event(lua_State *L, SDL_Event *e)
 		case SDL_CONTROLLERDEVICEADDED:
 			lua_pushliteral(L,"controller_added");
 			break;
-		case SDL_CONTROLLERDEVICEMAPPED:
-			lua_pushliteral(L,"controller_mapped");
+		case SDL_CONTROLLERDEVICEREMAPPED:
+			lua_pushliteral(L,"controller_remapped");
 			break;
 		case SDL_CONTROLLERDEVICEREMOVED:
 			lua_pushliteral(L,"controller_removed");
@@ -799,12 +799,101 @@ static void lh_luna_make_controller_device_event(lua_State *L, SDL_Event *e)
 	lua_setfield(L,-2,"type");
 	
 	// timestamp
-	lua_pushinteger(e->cdevice.timestamp);
+	lua_pushinteger(L,e->cdevice.timestamp);
 	lua_setfield(L,-2,"timestamp");
 	
 	// controller_id
-	lua_pushinteger(e->cdevice.which);
+	lua_pushinteger(L,e->cdevice.which);
 	lua_setfield(L,-2,"controller_id");
+}
+
+static void lh_luna_make_window_event(lua_State *L, SDL_Event *e)
+{
+	lua_pushnil(L); // this gets copied over by the event type
+	lua_newtable(L);
+
+	// timestamp
+	lua_pushinteger(L,e->window.timestamp);
+	lua_setfield(L,-2,"timestamp");
+	// window_id
+	lua_pushinteger(L,e->window.windowID);
+	lua_setfield(L,-2,"window_id");
+	// type (and data)
+	switch (e->window.event) {
+		case SDL_WINDOWEVENT_SHOWN:
+			lua_pushliteral(L,"window_shown");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_HIDDEN:
+			lua_pushliteral(L,"window_hidden");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_EXPOSED:
+			lua_pushliteral(L,"window_exposed");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_MOVED:
+			lua_pushinteger(L,e->window.data1);
+			lua_setfield(L,-2,"x");
+			lua_pushinteger(L,e->window.data2);
+			lua_setfield(L,-2,"y");
+			lua_pushliteral(L,"window_moved");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_RESIZED:
+			lua_pushinteger(L,e->window.data1);
+			lua_setfield(L,-2,"w");
+			lua_pushinteger(L,e->window.data2);
+			lua_setfield(L,-2,"h");
+			lua_pushliteral(L,"window_resized");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_MINIMIZED:
+			lua_pushliteral(L,"window_minimized");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_MAXIMIZED:
+			lua_pushliteral(L,"window_maximized");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_RESTORED:
+			lua_pushliteral(L,"window_restored");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_ENTER:
+			lua_pushliteral(L,"window_enter");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_LEAVE:
+			lua_pushliteral(L,"window_leave");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_FOCUS_GAINED:
+			lua_pushliteral(L,"window_focus_gained");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_FOCUS_LOST:
+			lua_pushliteral(L,"window_focus_lost");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+		case SDL_WINDOWEVENT_CLOSE:
+			lua_pushliteral(L,"window_close");
+			lua_copy(L,-1,-3);
+			lua_setfield(L,-2,"type");
+			break;
+	}
 }
 
 static int l_luna_event_poll(lua_State *L)
@@ -860,10 +949,13 @@ static int l_luna_event_poll(lua_State *L)
 			lua_pushliteral(L,"controller_removed");
 			lh_luna_make_controller_device_event(L,&event);
 			break;
-		case SDL_CONTROLLERDEVICEMAPPED:
-			lua_pushliteral(L,"controller_mapped");
+		case SDL_CONTROLLERDEVICEREMAPPED:
+			lua_pushliteral(L,"controller_remapped");
 			lh_luna_make_controller_device_event(L,&event);
 			break;
+		case SDL_WINDOWEVENT:
+			// helper function handles pushing the type too!
+			lh_luna_make_window_event(L,&event);
 		default:
 			break;
 	}
