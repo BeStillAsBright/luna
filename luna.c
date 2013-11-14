@@ -1009,7 +1009,7 @@ static int l_luna_window_new(lua_State *L)
 			win_flags, &win.window, &win.renderer);
 
 	if (err) {
-		lua_pushfstring(L,"ERROR: window.new failed: %s\n", SDL_GetError);
+		lua_pushfstring(L,"ERROR: luna.window.new failed: %s\n", SDL_GetError);
 		lua_error(L);
 	}
 
