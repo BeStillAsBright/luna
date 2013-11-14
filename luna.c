@@ -956,10 +956,19 @@ static int l_luna_event_poll(lua_State *L)
 		case SDL_WINDOWEVENT:
 			// helper function handles pushing the type too!
 			lh_luna_make_window_event(L,&event);
+		case SDL_QUIT:
+			// this is small enough to handle here
+			lua_pushliteral(L,"quit");
+			lua_newtable(L);
+			lua_pushliteral(L,"quit");
+			lua_setfield(L,-2,"type");
+			lua_pushinteger(L, event.quit.timestamp);
+			lua_setfield(L,-2,"timestamp");
+			break;
 		default:
 			break;
 	}
-	return 2; // return type, event_table
+	return 2; // returns: type:string, event:table
 }
 
 // module defs
