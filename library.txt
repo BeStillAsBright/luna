@@ -1,0 +1,15 @@
+luna = {
+	function init()
+	function quit()
+	event = {
+		function poll() -> type: string, event: table
+	}
+	Window = {
+		function new(w:int, h:int, fullscreen:boolean) -> Window
+		method close()
+		method draw(tex:luna.Texture)
+		method paint()
+	}
+
+
+}
