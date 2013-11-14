@@ -9,15 +9,33 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
-// Metatable defines
+// //////////////////
+// Metatable names //
+// //////////////////
+static const char *LUNA_WINDOW_MT = "luna.Window";
+static const char *LUNA_TEXTURE_MT = "luna.Texture";
 
+// ////////////////////////
+// Structure definitions //
+// ////////////////////////
 
 // use for userdata for window object; it's easier to keep them both in one
-typedef struct luna_Display {
+typedef struct luna_Window {
 	SDL_Window *window;
 	SDL_Renderer *renderer;
-} luna_Display;
+	int closed;
+} luna_Window;
 
+typedef struct luna_Texture {
+
+} luna_Texture;
+
+
+// ///////////////////
+// luna.* functions //
+// ///////////////////
+
+// luna.init() -> ()
 static int l_luna_init(lua_State *L)
 {
 	SDL_SetMainReady(); // needed because we're using SDL_MAIN_HANDLED
@@ -25,6 +43,7 @@ static int l_luna_init(lua_State *L)
 	return 0;
 }
 
+// luna.quit() -> ()
 static int l_luna_quit(lua_State *L)
 {
 	SDL_Quit();
@@ -896,6 +915,7 @@ static void lh_luna_make_window_event(lua_State *L, SDL_Event *e)
 	}
 }
 
+// luna.event.poll() -> type: string, event: luna.Event
 static int l_luna_event_poll(lua_State *L)
 {
 	SDL_Event event;
@@ -960,7 +980,7 @@ static int l_luna_event_poll(lua_State *L)
 			// this is small enough to handle here
 			lua_pushliteral(L,"quit");
 			lua_newtable(L);
-			lua_pushliteral(L,"quit");
+			lua_pushvalue(L,-2); // push copy of "quit"
 			lua_setfield(L,-2,"type");
 			lua_pushinteger(L, event.quit.timestamp);
 			lua_setfield(L,-2,"timestamp");
@@ -970,6 +990,65 @@ static int l_luna_event_poll(lua_State *L)
 	}
 	return 2; // returns: type:string, event:table
 }
+
+// //////////////////////////
+// luna.window.* functions //
+// //////////////////////////
+
+// luna.window.new(w:int,h:int,fullscreen:boolean) -> win:luna.Window
+static int l_luna_window_new(lua_State *L)
+{
+	int w = luaL_checkinteger(L,1);
+	int h = luaL_checkinteger(L,2);
+	luaL_checktype(L,3,LUA_TBOOLEAN);
+	int fs = lua_toboolean(L,3);
+	luna_Window *win = lua_newuserdata(L, sizeof(*win));
+
+	int win_flags = (fs) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0;
+	int err = SDL_CreateWindowAndRenderer(w, h, 
+			win_flags, &win.window, &win.renderer);
+
+	if (err) {
+		lua_pushfstring(L,"ERROR: window.new failed: %s\n", SDL_GetError);
+		lua_error(L);
+	}
+
+	win->closed = 0;
+	luaL_setmetatable(L,LUNA_WINDOW_MT);
+	return 1; // return our window
+}
+
+// //////////////////////
+// luna.Window methods //
+// //////////////////////
+
+// luna.Window:close() -> ()
+static int l_luna_window_close(lua_State *L)
+{
+	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
+	SDL_DestroyRenderer(win->renderer);
+	SDL_DestroyWindow(win->window);
+	win->closed = 1;
+	return 0;
+}
+
+//  luna.Window:draw(tex: luna.Texture) -> ()
+//  stages drawing; need to paint to actually display
+static int l_luna_window_draw(lua_State *L) 
+{
+	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
+	// TODO here
+}
+
+static const luaL_Reg l_luna_window_module_fns[] = {
+	{"new", &l_luna_window_new},
+	{NULL,NULL}
+};
+static const luaL_Reg l_luna_window_metatable[] = {
+	{"close", &l_luna_window_close},
+	{NULL,NULL}
+};
+
 
 // module defs
 static const luaL_Reg l_luna_module_fns[] = {
