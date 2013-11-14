@@ -27,7 +27,7 @@ typedef struct luna_Window {
 } luna_Window;
 
 typedef struct luna_Texture {
-
+	SDL_Texture *texture;
 } luna_Texture;
 
 
@@ -991,12 +991,12 @@ static int l_luna_event_poll(lua_State *L)
 	return 2; // returns: type:string, event:table
 }
 
-// //////////////////////////
-// luna.window.* functions //
-// //////////////////////////
+// //////////////////////////////////
+// luna.window.* functions/methods //
+// //////////////////////////////////
 
-// luna.window.new(w:int,h:int,fullscreen:boolean) -> win:luna.Window
-static int l_luna_window_new(lua_State *L)
+// luna.Window.new(w:int,h:int,fullscreen:boolean) -> win:luna.Window
+static int c_luna_window_new(lua_State *L)
 {
 	int w = luaL_checkinteger(L,1);
 	int h = luaL_checkinteger(L,2);
@@ -1018,12 +1018,9 @@ static int l_luna_window_new(lua_State *L)
 	return 1; // return our window
 }
 
-// //////////////////////
-// luna.Window methods //
-// //////////////////////
 
 // luna.Window:close() -> ()
-static int l_luna_window_close(lua_State *L)
+static int m_luna_window_close(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	SDL_DestroyRenderer(win->renderer);
@@ -1034,18 +1031,19 @@ static int l_luna_window_close(lua_State *L)
 
 //  luna.Window:draw(tex: luna.Texture) -> ()
 //  stages drawing; need to paint to actually display
-static int l_luna_window_draw(lua_State *L) 
+static int m_luna_window_draw(lua_State *L) 
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	// TODO here
 }
 
 static const luaL_Reg l_luna_window_module_fns[] = {
-	{"new", &l_luna_window_new},
+	{"new", &c_luna_window_new},
 	{NULL,NULL}
-};
-static const luaL_Reg l_luna_window_metatable[] = {
-	{"close", &l_luna_window_close},
+}
+static const luaL_Reg m_luna_window_metatable[] = {
+	{"close", &m_luna_window_close},
+	{"draw", &m_luna_window_draw},
 	{NULL,NULL}
 };
 
