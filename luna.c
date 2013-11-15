@@ -42,7 +42,7 @@ static int l_luna_init(lua_State *L)
 {
 	SDL_SetMainReady(); // needed because we're using SDL_MAIN_HANDLED
 	SDL_Init(SDL_INIT_EVERYTHING); // just init everything (even if unused)
-	int flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF
+	int flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF;
 	int initted = IMG_Init(flags);
 	if (initted&flags != flags) {
 		lua_pushfstring(L,"SDL_image init failed: %s\n",IMG_GetError());
@@ -1092,14 +1092,12 @@ static const luaL_Reg m_luna_window_metatable[] = {
 // luna.Texture //
 // ///////////////
 
-// luna.Texture.new(window:luna.Window,filename:string,[colorkey:int) -> 
-// 		luna.Texture
+// luna.Texture.new(window:luna.Window,filename:string) -> luna.Texture
 static int c_luna_texture_new(lua_State *L)
 {
-	// TODO HERE
+	// TODO maybe add colorkey support?
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	char *fname = luaL_checkstring(L,2);
-	int colorkey = luaL_optint(L,3); // we're assuming there's never black
 
 	luna_Texture *tex = lua_newuserdata(L, sizeof(*tex));
 	// get our surface from the filename
@@ -1127,6 +1125,26 @@ static int c_luna_texture_new(lua_State *L)
 	return 1;
 }
 
+// luna.Texture:__gc() (garbage collection)
+static int m_luna_texture_gc(lua_State *L)
+{
+	luna_Texture *tex = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
+	if (!tex->freed) {
+		SDL_DestroyTexture(tex->texture);
+	}
+	return 0;
+}
+
+static const luaL_Reg l_luna_texture_module_fns[] = {
+	{"new", &c_luna_texture_new},
+	{NULL,NULL}
+};
+
+static const luaL_Reg m_luna_texture_metatable[] =  {
+	{"__gc", &m_luna_texture_gc},
+	{NULL,NULL}
+};
+
 // module defs
 static const luaL_Reg l_luna_module_fns[] = {
 	{"init", &l_luna_init},
@@ -1147,15 +1165,27 @@ int luaopen_luna(lua_State *L)
 	lua_pushvalue(L,-2);
 	lua_rawset(L,-3); // metatable.__index = metatable
 	luaL_setfuncs(L, m_luna_window_metatable, 0);
+	lua_pop(L,1);
+
+	// set texture metatable
+	luaL_newmetatable(L,LUNA_TEXTURE_MT);
+	lua_pushliteral(L,"__index");
+	lua_pushvalue(L,-2);
+	lua_rawset(L,-3); // metatable.__index = metatable
+	luaL_setfuncs(L, m_luna_texture_metatable, 0);
+	lua_pop(L,1);
 
 	// add luna module
 	luaL_newlib(L, l_luna_module_fns);
 	// add luna.event module
 	luaL_newlib(L, l_luna_event_module_fns);
 	lua_setfield(L, -2, "event");
-	// add luna.Window module ('static methods')
+	// add luna.Window static methods
 	luaL_newlib(L, l_luna_window_module_fns);
 	lua_setfield(L, -2, "Window");
+	// add luna.Texture static methods
+	luaL_newlib(L, l_luna_texture_module_fns);
+	lua_setfield(L, -2, "Texture");
 
 	return 1; // return our library
 }
