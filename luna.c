@@ -8,6 +8,7 @@
 // and put parachute code in main and also die.
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 // //////////////////
 // Metatable names //
@@ -28,6 +29,7 @@ typedef struct luna_Window {
 
 typedef struct luna_Texture {
 	SDL_Texture *texture;
+	int freed;
 } luna_Texture;
 
 
@@ -40,6 +42,12 @@ static int l_luna_init(lua_State *L)
 {
 	SDL_SetMainReady(); // needed because we're using SDL_MAIN_HANDLED
 	SDL_Init(SDL_INIT_EVERYTHING); // just init everything (even if unused)
+	int flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF
+	int initted = IMG_Init(flags);
+	if (initted&flags != flags) {
+		lua_pushfstring(L,"SDL_image init failed: %s\n",IMG_GetError());
+		lua_error(L);
+	}
 	return 0;
 }
 
@@ -1080,6 +1088,44 @@ static const luaL_Reg m_luna_window_metatable[] = {
 	{NULL,NULL}
 };
 
+// ///////////////
+// luna.Texture //
+// ///////////////
+
+// luna.Texture.new(window:luna.Window,filename:string,[colorkey:int) -> 
+// 		luna.Texture
+static int c_luna_texture_new(lua_State *L)
+{
+	// TODO HERE
+	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
+	char *fname = luaL_checkstring(L,2);
+	int colorkey = luaL_optint(L,3); // we're assuming there's never black
+
+	luna_Texture *tex = lua_newuserdata(L, sizeof(*tex));
+	// get our surface from the filename
+	SDL_Surface *surf = IMG_Load(fname);
+	if (!surf) {
+		lua_pushfstring(L,"ERROR luna.Texture.new IMG_Load: %s\n",
+				IMG_GetError());
+		lua_error(L);
+	}
+	// create our texture
+	tex->texture = SDL_CreateTextureFromSurface(win->renderer,surf);
+	if (!tex->texture) {
+		lua_pushfstring(L,
+				"ERROR luna.Texture.new: SDL_CreateTextureFromSurface: %s\n",
+				SDL_GetError());
+		lua_error(L);
+	}
+	// free our temporary surface
+	SDL_FreeSurface(surf);
+
+	// set freed flag to 0; used for __gc
+	tex->freed = 0;
+
+	luaL_setmetatable(L,LUNA_TEXTURE_MT);
+	return 1;
+}
 
 // module defs
 static const luaL_Reg l_luna_module_fns[] = {
