@@ -58,6 +58,14 @@ static int l_luna_quit(lua_State *L)
 	return 0;
 }
 
+// luna.delay(ms:int) -> ()
+static int l_luna_delay(lua_State *L)
+{
+	int ms = luaL_checkinteger(L,1);
+	SDL_Delay(ms);
+	return 0;
+}
+
 /* EVENT CODE */
 
 // 
@@ -1151,6 +1159,7 @@ static const luaL_Reg m_luna_texture_metatable[] =  {
 static const luaL_Reg l_luna_module_fns[] = {
 	{"init", &l_luna_init},
 	{"quit", &l_luna_quit},
+	{"delay", &l_luna_delay},
 	{NULL,NULL}
 };
 

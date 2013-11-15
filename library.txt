@@ -1,6 +1,7 @@
 luna = {
 	function init()
 	function quit()
+	function delay(ms:int)
 	event = {
 		function poll() -> type: string, event: table
 	}
