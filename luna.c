@@ -1029,12 +1029,33 @@ static int m_luna_window_close(lua_State *L)
 	return 0;
 }
 
-//  luna.Window:draw(tex: luna.Texture) -> ()
+//  luna.Window:draw(tex: luna.Texture, x:int, y:int) -> ()
 //  stages drawing; need to paint to actually display
 static int m_luna_window_draw(lua_State *L) 
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
-	// TODO here
+	luna_Texture *tex = luaL_checkudata(L,2,LUNA_TEXTURE_MT);
+	int x = luaL_checkinteger(L,3);
+	int y = luaL_checkinteger(L,4);
+	SDL_Rect dst = (SDL_Rect) {.x = x, .y = y};
+	
+	SDL_RenderCopy(win->renderer, tex->texture, NULL, &dst);
+	return 0;
+}
+
+// luna.Window:paint() -> ()
+static int m_luna_window_paint(lua_State *L)
+{
+	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
+	SDL_RenderPresent(win->renderer);
+	return 0;
+}
+
+static int m_luna_window_clear(lua_State *L)
+{
+	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
+	SDL_RenderClear(win->renderer);
+	return 0;
 }
 
 static const luaL_Reg l_luna_window_module_fns[] = {
@@ -1044,6 +1065,8 @@ static const luaL_Reg l_luna_window_module_fns[] = {
 static const luaL_Reg m_luna_window_metatable[] = {
 	{"close", &m_luna_window_close},
 	{"draw", &m_luna_window_draw},
+	{"paint", &m_luna_window_paint},
+	{"clear", &m_luna_window_clear},
 	{NULL,NULL}
 };
 
