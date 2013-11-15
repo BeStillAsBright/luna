@@ -8,7 +8,9 @@ luna = {
 	Window = {
 		function new(w:int, h:int, fullscreen:boolean) -> luna.Window
 		method close()
-		method draw(tex:luna.Texture)
+		method show()
+		method hide()
+		method draw(tex:luna.Texture, x:int, y:int)
 		method paint()
 		method clear()
 		method __gc()

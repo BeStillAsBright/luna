@@ -29,6 +29,8 @@ typedef struct luna_Window {
 
 typedef struct luna_Texture {
 	SDL_Texture *texture;
+	int w;
+	int h;
 	int freed;
 } luna_Texture;
 
@@ -1020,7 +1022,10 @@ static int c_luna_window_new(lua_State *L)
 	int fs = lua_toboolean(L,3);
 	luna_Window *win = lua_newuserdata(L, sizeof(*win));
 
-	int win_flags = (fs) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0;
+	int win_flags = SDL_WINDOW_HIDDEN;
+	if (fs) {
+		win_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+	}
 	int err = SDL_CreateWindowAndRenderer(w, h, 
 			win_flags, &win->window, &win->renderer);
 
@@ -1034,6 +1039,20 @@ static int c_luna_window_new(lua_State *L)
 	return 1; // return our window
 }
 
+// luna.Window:show() -> ()
+static int m_luna_window_show(lua_State *L)
+{
+	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
+	SDL_ShowWindow(win->window);
+	return 0;
+}
+
+static int m_luna_window_hide(lua_State *L)
+{
+	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
+	SDL_HideWindow(win->window);
+	return 0;
+}
 
 // luna.Window:close() -> ()
 static int m_luna_window_close(lua_State *L)
@@ -1055,7 +1074,7 @@ static int m_luna_window_draw(lua_State *L)
 	luna_Texture *tex = luaL_checkudata(L,2,LUNA_TEXTURE_MT);
 	int x = luaL_checkinteger(L,3);
 	int y = luaL_checkinteger(L,4);
-	SDL_Rect dst = (SDL_Rect) {.x = x, .y = y};
+	SDL_Rect dst = (SDL_Rect) {.x = x, .y = y, .w = tex->w, .h = tex->h};
 	
 	SDL_RenderCopy(win->renderer, tex->texture, NULL, &dst);
 	return 0;
@@ -1094,6 +1113,8 @@ static const luaL_Reg m_luna_window_metatable[] = {
 	{"draw", &m_luna_window_draw},
 	{"paint", &m_luna_window_paint},
 	{"clear", &m_luna_window_clear},
+	{"show", &m_luna_window_show},
+	{"hide", &m_luna_window_hide},
 	{"__gc", &m_luna_window_gc},
 	{NULL,NULL}
 };
@@ -1117,6 +1138,8 @@ static int c_luna_texture_new(lua_State *L)
 				IMG_GetError());
 		lua_error(L);
 	}
+	tex->w = surf->w;
+	tex->h = surf->h;
 	// create our texture
 	tex->texture = SDL_CreateTextureFromSurface(win->renderer,surf);
 	if (!tex->texture) {
