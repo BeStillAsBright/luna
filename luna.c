@@ -44,7 +44,7 @@ static int l_luna_init(lua_State *L)
 	SDL_Init(SDL_INIT_EVERYTHING); // just init everything (even if unused)
 	int flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF;
 	int initted = IMG_Init(flags);
-	if (initted&flags != flags) {
+	if ((initted&flags) != flags) {
 		lua_pushfstring(L,"SDL_image init failed: %s\n",IMG_GetError());
 		lua_error(L);
 	}
@@ -1014,7 +1014,7 @@ static int c_luna_window_new(lua_State *L)
 
 	int win_flags = (fs) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0;
 	int err = SDL_CreateWindowAndRenderer(w, h, 
-			win_flags, &win.window, &win.renderer);
+			win_flags, &win->window, &win->renderer);
 
 	if (err) {
 		lua_pushfstring(L,"ERROR: luna.window.new failed: %s\n", SDL_GetError);
@@ -1073,12 +1073,14 @@ static int m_luna_window_gc(lua_State *L)
 {
 	// all we need to do is close it
 	m_luna_window_close(L);
+	return 0;
 }
 
 static const luaL_Reg l_luna_window_module_fns[] = {
 	{"new", &c_luna_window_new},
 	{NULL,NULL}
-}
+};
+
 static const luaL_Reg m_luna_window_metatable[] = {
 	{"close", &m_luna_window_close},
 	{"draw", &m_luna_window_draw},
@@ -1155,7 +1157,7 @@ static const luaL_Reg l_luna_module_fns[] = {
 static const luaL_Reg l_luna_event_module_fns[] = {
 	{"poll", &l_luna_event_poll},
 	{NULL,NULL}
-}
+};
 
 int luaopen_luna(lua_State *L)
 {
