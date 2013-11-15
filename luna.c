@@ -1023,9 +1023,11 @@ static int c_luna_window_new(lua_State *L)
 static int m_luna_window_close(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
-	SDL_DestroyRenderer(win->renderer);
-	SDL_DestroyWindow(win->window);
-	win->closed = 1;
+	if (!win->closed) {
+		SDL_DestroyRenderer(win->renderer);
+		SDL_DestroyWindow(win->window);
+		win->closed = 1;
+	}
 	return 0;
 }
 
@@ -1058,6 +1060,13 @@ static int m_luna_window_clear(lua_State *L)
 	return 0;
 }
 
+// luna.Window.__gc() -- called on garbage collection
+static int m_luna_window_gc(lua_State *L)
+{
+	// all we need to do is close it
+	m_luna_window_close(L);
+}
+
 static const luaL_Reg l_luna_window_module_fns[] = {
 	{"new", &c_luna_window_new},
 	{NULL,NULL}
@@ -1067,6 +1076,7 @@ static const luaL_Reg m_luna_window_metatable[] = {
 	{"draw", &m_luna_window_draw},
 	{"paint", &m_luna_window_paint},
 	{"clear", &m_luna_window_clear},
+	{"__gc", &m_luna_window_gc},
 	{NULL,NULL}
 };
 
