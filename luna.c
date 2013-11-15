@@ -1078,9 +1078,29 @@ static const luaL_Reg l_luna_module_fns[] = {
 	{NULL,NULL}
 };
 
+static const luaL_Reg l_luna_event_module_fns[] = {
+	{"poll", &l_luna_event_poll},
+	{NULL,NULL}
+}
 
 int luaopen_luna(lua_State *L)
 {
+	// set window metatable
+	luaL_newmetatable(L,LUNA_WINDOW_MT);
+	lua_pushliteral(L,"__index");
+	lua_pushvalue(L,-2);
+	lua_rawset(L,-3); // metatable.__index = metatable
+	luaL_setfuncs(L, m_luna_window_metatable, 0);
 
+	// add luna module
+	luaL_newlib(L, l_luna_module_fns);
+	// add luna.event module
+	luaL_newlib(L, l_luna_event_module_fns);
+	lua_setfield(L, -2, "event");
+	// add luna.Window module ('static methods')
+	luaL_newlib(L, l_luna_window_module_fns);
+	lua_setfield(L, -2, "Window");
+
+	return 1; // return our library
 }
 
