@@ -34,7 +34,6 @@ typedef struct luna_Texture {
 	SDL_Texture *texture;
 	int w;
 	int h;
-	int freed;
 } luna_Texture;
 
 typedef struct luna_Sound {
@@ -1193,8 +1192,6 @@ static int c_luna_texture_new(lua_State *L)
 	// free our temporary surface
 	SDL_FreeSurface(surf);
 
-	// set freed flag to 0; used for __gc
-	tex->freed = 0;
 
 	luaL_setmetatable(L,LUNA_TEXTURE_MT);
 	return 1;
@@ -1204,9 +1201,7 @@ static int c_luna_texture_new(lua_State *L)
 static int m_luna_texture_gc(lua_State *L)
 {
 	luna_Texture *tex = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
-	if (!tex->freed) {
-		SDL_DestroyTexture(tex->texture);
-	}
+	SDL_DestroyTexture(tex->texture);
 	return 0;
 }
 
@@ -1220,19 +1215,138 @@ static const luaL_Reg m_luna_texture_metatable[] =  {
 	{NULL,NULL}
 };
 
-// /////////////////////
-// luna.Music methods //
-////////////////////////
+// ///////////////////////
+// luna.music functions //
+// ///////////////////////
 
-// 
+// luna.music.new(filename:string) -> luna.Music
 static int c_luna_music_new(lua_State *L)
 {
- // TODO here
+	char *filename = luaL_checkstring(L,1);
+
+	luna_Music *m = lua_newuserdata(L,sizeof(*m));
+	m->music = Mix_LoadMUS(filename);
+	if (!m->music) {
+		lua_pushfstring(L,"luna.Music.new: Mix_LoadMUS: %s\n", Mix_GetError());
+		lua_error(L);
+	}
+
+	luaL_setmetatable(L,LUNA_MUSIC_MT);
+	return 1;
 }
 
-// module defs
+// luna.music.pause() -> ()
+static int l_luna_music_pause(lua_State *L)
+{
+	Mix_PauseMusic();
+	return 0;
+}
+
+// luna.music.resume() -> ()
+static int l_luna_music_resume(lua_State *L)
+{
+	Mix_ResumeMusic();
+	return 0;
+}
+
+// luna.music.rewind() -> ()
+static int l_luna_music_rewind(lua_State *L)
+{
+	Mix_RewindMusic();
+	return 0;
+}
+
+// luna.music.set_volume(volume:int) -> ()
+static int l_luna_music_set_volume(lua_State *L)
+{
+	int volume = luaL_checkinteger(L,1);
+	Mix_VolumeMusic(volume);
+	return 0;
+}
+
+// luna.music.volume() -> current_volume:int
+static int l_luna_music_volume(lua_State *L)
+{
+	int volume = Mix_VolumeMusic(-1);
+	lua_pushinteger(L,volume);
+	return 1;
+}
+
+// luna.music.halt() -> ()
+static int l_luna_music_halt(lua_State *L)
+{
+	Mix_HaltMusic();
+	return 0;
+}
+
+// luna.music.fade_out(ms:int) -> ()
+static int l_luna_music_fade_out(lua_State *L)
+{
+	int ms = luaL_checkinteger(L,1);
+	Mix_FadeOutMusic(ms);
+	return 0;
+}
+
+// luna.music.set_position(seconds:number) -> ()
+static int l_luna_music_set_position(lua_State *L)
+{
+	double seconds = luaL_checknumber(L,1);
+	Mix_RewindMusic();
+	Mix_SetMusicPosition(seconds);
+	return 0;
+}
+
+// TODO implement:
+// luna.music.is_paused() -> boolean
+// luna.music.is_playing() -> boolean
+// luna.music.is_fading() -> 'in' | 'out' | false
+
+static luaL_Reg l_luna_music_module_fns[] = {
+	{"new", &c_luna_music_new},
+	{"pause", &l_luna_music_pause},
+	{"resume", &l_luna_music_resume},
+	{"rewind", &l_luna_music_rewind},
+	{"set_volume", &l_luna_music_set_volume},
+	{"volume", &l_luna_music_volume},
+	{"halt", &l_luna_music_halt},
+	{"fade_out", &l_luna_music_fade_out},
+	{"set_position", &l_luna_music_set_position},
+	{NULL,NULL}
+};
+
+// /////////////////////
+// luna.Music methods //
+// /////////////////////
+
+// luna.Music:play([loops:int = -1]) -> () -- loop forever if no argument!
+static int m_luna_music_play(lua_State *L)
+{
+	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
+	int loops = luaL_optint(L,2,-1); // loop forever if no argument
+	Mix_PlayMusic(m->music, loops);
+	return 0;
+}
 
 
+// luna.Music.__gc() -- garbage collection
+static int m_luna_music_gc(lua_State *L)
+{
+	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
+	Mix_FreeMusic(m->music);
+	return 0;
+}
+
+
+static luaL_Reg m_luna_music_metatable[] = {
+	{"play", &m_luna_music_play},
+	{"__gc", &m_luna_music_gc},
+	{NULL,NULL}
+};
+
+
+// ////////////////////////
+// Library opening code! //
+// ////////////////////////
 int luaopen_luna(lua_State *L)
 {
 	// set window metatable
@@ -1251,17 +1365,28 @@ int luaopen_luna(lua_State *L)
 	luaL_setfuncs(L, m_luna_texture_metatable, 0);
 	lua_pop(L,1);
 
+	// set music metatable
+	luaL_newmetatable(L, LUNA_MUSIC_MT);
+	lua_pushliteral(L,"__index");
+	lua_pushvalue(L,-2);
+	lua_rawset(L,-3); // metatable.__index = metatable
+	luaL_setfuncs(L, m_luna_music_metatable, 0);
+	lua_pop(L,1);
+
 	// add luna module
 	luaL_newlib(L, l_luna_module_fns);
 	// add luna.event module
 	luaL_newlib(L, l_luna_event_module_fns);
 	lua_setfield(L, -2, "event");
-	// add luna.Window static methods
+	// add luna.window module functions
 	luaL_newlib(L, l_luna_window_module_fns);
-	lua_setfield(L, -2, "Window");
-	// add luna.Texture static methods
+	lua_setfield(L, -2, "window");
+	// add luna.texture module functions
 	luaL_newlib(L, l_luna_texture_module_fns);
-	lua_setfield(L, -2, "Texture");
+	lua_setfield(L, -2, "texture");
+	// add luna.music module functions
+	luaL_newlib(L, l_luna_music_module_fns);
+	lua_setfield(L, -2, "music");
 
 	return 1; // return our library
 }
