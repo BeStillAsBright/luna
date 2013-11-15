@@ -5,7 +5,7 @@
 
 // we need this since we're not defining a main() function.
 // if we didn't #define this, SDL would try to #define main SDL_main
-// and put parachute code in main and also die.
+// and put startup code in main and also die becasue we aren't calling main.
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
