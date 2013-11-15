@@ -38,6 +38,7 @@ typedef struct luna_Texture {
 
 typedef struct luna_Sound {
 	Mix_Chunk *chunk;
+	int channel;
 } luna_Sound;
 
 typedef struct luna_Music {
@@ -1296,10 +1297,37 @@ static int l_luna_music_set_position(lua_State *L)
 	return 0;
 }
 
-// TODO implement:
 // luna.music.is_paused() -> boolean
+static int l_luna_music_is_paused(lua_State *L)
+{
+	lua_pushboolean(L,Mix_PausedMusic());
+	return 1;
+}
 // luna.music.is_playing() -> boolean
-// luna.music.is_fading() -> 'in' | 'out' | false
+static int l_luna_music_is_playing(lua_State *L)
+{
+	lua_pushboolean(L,Mix_PlayingMusic());
+	return 1;
+}
+// luna.music.is_fading() -> fading:boolean, dir:string['in' | 'out']
+static int l_luna_music_is_fading(lua_State *L)
+{
+	switch (Mix_FadingMusic()) {
+		case MIX_NO_FADING:
+			lua_pushboolean(L,0);
+			lua_pushnil(L);
+			break;
+		case MIX_FADING_IN:
+			lua_pushboolean(L,1);
+			lua_pushliteral(L,"in");
+			break;
+		case MIX_FADING_OUT:
+			lua_pushboolean(L,1);
+			lua_pushliteral(L,"out");
+			break
+	}
+	return 2;
+}
 
 static luaL_Reg l_luna_music_module_fns[] = {
 	{"new", &c_luna_music_new},
@@ -1311,6 +1339,9 @@ static luaL_Reg l_luna_music_module_fns[] = {
 	{"halt", &l_luna_music_halt},
 	{"fade_out", &l_luna_music_fade_out},
 	{"set_position", &l_luna_music_set_position},
+	{"is_playing", &l_luna_music_is_playing},
+	{"is_paused", &l_luna_music_is_paused},
+	{"is_fading", &l_luna_music_is_fading},
 	{NULL,NULL}
 };
 
@@ -1327,6 +1358,36 @@ static int m_luna_music_play(lua_State *L)
 	return 0;
 }
 
+// luna.Music:play_from(start_pos:number, [loops:int = -1]) -> ()
+static int m_luna_play_from(lua_State *L)
+{
+	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
+	double pos = luaL_checknumber(L,2);
+	int loops = luaL_optint(L,3,-1);
+	Mix_FadeInMusicPos(m->music,loops,0,pos);
+	return 0;
+}
+
+// luna.Music:fade_in(ms:int, [loops:int = -1]) -> ()
+static int m_luna_music_fade_in(lua_State *L)
+{
+	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
+	int ms = luaL_checkinteger(L,2);
+	int loops = luaL_optint(L,3,-1);
+	Mix_FadeInMusic(m->music, loops, ms);
+	return 0;
+}
+
+// luna.Music:fade_in_from(pos:number, ms:int, [loops:int = -1]) -> ()
+static int m_luna_music_fade_in_from(lua_State *L)
+{
+	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
+	double pos = luaL_checknumber(L,2);
+	int ms = luaL_checkinteger(L,3);
+	int loops = luaL_optint(L,4,-1);
+	Mix_FadeInMusicPos(m->music, loops, ms, pos);
+	return 0;
+}
 
 // luna.Music.__gc() -- garbage collection
 static int m_luna_music_gc(lua_State *L)
@@ -1339,10 +1400,64 @@ static int m_luna_music_gc(lua_State *L)
 
 static luaL_Reg m_luna_music_metatable[] = {
 	{"play", &m_luna_music_play},
+	{"play_from", &m_luna_play_from},
+	{"fade_in", &m_luna_music_fade_in},
+	{"fade_in_from", &m_luna_music_fade_in_from},
 	{"__gc", &m_luna_music_gc},
 	{NULL,NULL}
 };
 
+// ///////////////////////
+// luna.sound functions //
+// ///////////////////////
+
+// luna.sound.new(filename:string) -> luna.Sound
+static int l_luna_sound_new(lua_State *L)
+{
+	char *fname = luaL_checkstring(L,1);
+	luna_Sound *s = lua_newuserdata(L, sizeof(*s));
+
+	s->chunk = Mix_LoadWAV(fname);
+	s->channel = -1; // we want to play on the first unreserved channel
+
+	luaL_setmetatable(L, LUNA_SOUND_MT);
+	return 1;
+}
+
+static luaL_Reg l_luna_sound_module_fns[] = {
+	{"new", &l_luna_sound_new},
+	{NULL,NULL}
+};
+
+// /////////////////////
+// luna.Sound methods //
+// /////////////////////
+
+// luna.Sound:play([times = infinite]) -> ()
+static int m_luna_sound_play(lua_State *L)
+{
+	luna_Sound *s = luaL_checkudata(L, 1, LUNA_SOUND_MT);
+	// subtract 1 here so Sound:play(1) won't repeat; Mix_PlayChannel plays one
+	// more time than the argument passed
+	int loops = luaL_optint(L, 2, -1) - 1; 
+	// we can just use s->channel here because it's initially set to -1
+	// so we automatically play on an unreserved channel. Then we store the
+	// channel we actually used in our userdata so Sound:pause() etc. works.
+	int chan Mix_PlayChannel(s->channel, s->chunk, loops);
+	s->channel = chan;
+	return 0;
+}
+
+// luna.Sound:play_timed(ms:int, [times = infinite]) -> ()
+static int m_luna_sound_play_timed(lua_State *L)
+{
+	// TODO here!!
+}
+
+static luaL_Reg m_luna_sound_metatable[] = {
+	{"play", &m_luna_sound_play},
+	{NULL,NULL}
+};
 
 // ////////////////////////
 // Library opening code! //
