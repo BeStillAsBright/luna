@@ -9,12 +9,15 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
 
 // //////////////////
 // Metatable names //
 // //////////////////
 static const char *LUNA_WINDOW_MT = "luna.Window";
 static const char *LUNA_TEXTURE_MT = "luna.Texture";
+static const char *LUNA_SOUND_MT = "luna.Sound";
+static const char *LUNA_MUSIC_MT = "luna.Music";
 
 // ////////////////////////
 // Structure definitions //
@@ -34,6 +37,14 @@ typedef struct luna_Texture {
 	int freed;
 } luna_Texture;
 
+typedef struct luna_Sound {
+	Mix_Chunk *chunk;
+} luna_Sound;
+
+typedef struct luna_Music {
+	Mix_Music *music;
+} luna_Music;
+
 
 // ///////////////////
 // luna.* functions //
@@ -50,12 +61,29 @@ static int l_luna_init(lua_State *L)
 		lua_pushfstring(L,"SDL_image init failed: %s\n",IMG_GetError());
 		lua_error(L);
 	}
+
+	int mixflags = MIX_INIT_OGG | MIX_INIT_MP3;
+	int mixinitted = Mix_Init(mixflags);
+	if ((mixinitted&mixflags) != mixflags) {
+		lua_pushfstring(L, "luna.init-Mix_Init: %s\n", Mix_GetError());
+		lua_error(L);
+	}
+
+	int merr = Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT,2,1024);
+	if (merr) {
+		lua_pushfstring(L,"luna.init-Mix_OpenAudio: %s\n",Mix_GetError());
+		lua_error(L);
+	}
+
 	return 0;
 }
 
 // luna.quit() -> ()
 static int l_luna_quit(lua_State *L)
 {
+	Mix_CloseAudio();
+	Mix_Quit();
+	IMG_Quit();
 	SDL_Quit();
 	return 0;
 }
@@ -68,7 +96,16 @@ static int l_luna_delay(lua_State *L)
 	return 0;
 }
 
-/* EVENT CODE */
+static const luaL_Reg l_luna_module_fns[] = {
+	{"init", &l_luna_init},
+	{"quit", &l_luna_quit},
+	{"delay", &l_luna_delay},
+	{NULL,NULL}
+};
+
+// //////////////////
+// luna.event code //
+// //////////////////
 
 // 
 static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
@@ -217,8 +254,7 @@ static void lh_luna_set_keycode(lua_State *L, SDL_Keysym *ks)
 			lua_pushliteral(L,"=");
 			break;
 		case SDLK_EXCLAIM:
-			lua_pushliteral(L,"!");
-			break;
+			lua_pushliteral(L,"!"); break;
 		case SDLK_GREATER:
 			lua_pushliteral(L,">");
 			break;
@@ -1009,6 +1045,12 @@ static int l_luna_event_poll(lua_State *L)
 	return 2; // returns: type:string, event:table
 }
 
+// luna.event module
+static const luaL_Reg l_luna_event_module_fns[] = {
+	{"poll", &l_luna_event_poll},
+	{NULL,NULL}
+};
+
 // //////////////////////////////////
 // luna.window.* functions/methods //
 // //////////////////////////////////
@@ -1178,18 +1220,18 @@ static const luaL_Reg m_luna_texture_metatable[] =  {
 	{NULL,NULL}
 };
 
-// module defs
-static const luaL_Reg l_luna_module_fns[] = {
-	{"init", &l_luna_init},
-	{"quit", &l_luna_quit},
-	{"delay", &l_luna_delay},
-	{NULL,NULL}
-};
+// /////////////////////
+// luna.Music methods //
+////////////////////////
 
-static const luaL_Reg l_luna_event_module_fns[] = {
-	{"poll", &l_luna_event_poll},
-	{NULL,NULL}
-};
+// 
+static int c_luna_music_new(lua_State *L)
+{
+ // TODO here
+}
+
+// module defs
+
 
 int luaopen_luna(lua_State *L)
 {
