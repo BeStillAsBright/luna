@@ -5,11 +5,15 @@ luna = {
 		function poll() -> type: string, event: table
 	}
 	Window = {
-		function new(w:int, h:int, fullscreen:boolean) -> Window
+		function new(w:int, h:int, fullscreen:boolean) -> luna.Window
 		method close()
 		method draw(tex:luna.Texture)
 		method paint()
+		method clear()
+		method __gc()
 	}
-
-
+	Texture = {
+		function new(window:luna.Window, filename:string) -> luna.Texture
+		method __gc()
+	}
 }
