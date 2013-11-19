@@ -1484,6 +1484,14 @@ static int l_luna_sound_number_paused(lua_State *L)
 // Module def
 static luaL_Reg l_luna_sound_module_fns[] = {
 	{"new", &l_luna_sound_new},
+	{"pause_all", &l_luna_sound_pause_all},
+	{"resume_all", &l_luna_sound_resume_all},
+	{"halt_all", &l_luna_sound_halt_all},
+	{"halt_timed_all", &l_luna_sound_halt_timed_all},
+	{"fade_out_all", &l_luna_sound_fade_out_all},
+	{"set_volume_all", &l_luna_sound_set_volume_all},
+	{"number_playing", &l_luna_sound_number_playing},
+	{"number_paused", &l_luna_sound_number_paused},
 	{NULL,NULL}
 };
 
@@ -1750,6 +1758,9 @@ int luaopen_luna(lua_State *L)
 	// add luna.music module functions
 	luaL_newlib(L, l_luna_music_module_fns);
 	lua_setfield(L, -2, "music");
+	// add luna.sound module functions
+	luaL_newlib(L, l_luna_sound_module_fns);
+	lua_setfield(L, -2, "sound");
 
 	return 1; // return our library
 }
