@@ -1424,6 +1424,17 @@ static int l_luna_sound_new(lua_State *L)
 	return 1;
 }
 
+// luna.sound.pause_all()
+// luna.sound.resume_all()
+// luna.sound.halt_all()
+// luna.sound.play_all()
+// luna.sound.halt_timed_all(ms: int)
+// luna.sound.fade_out_all(ms: int)
+// luna.sound.set_volume_all(volume: int)
+// luna.sound.number_playing() -> int
+// luna.sound.number_paused() -> int
+
+// Module def
 static luaL_Reg l_luna_sound_module_fns[] = {
 	{"new", &l_luna_sound_new},
 	{NULL,NULL}
@@ -1433,29 +1444,49 @@ static luaL_Reg l_luna_sound_module_fns[] = {
 // luna.Sound methods //
 // /////////////////////
 
-// luna.Sound:play([times = infinite]) -> ()
+// luna.Sound:play([repeats:int = 0])) -- SPECIAL: -1 repeats = forever
 static int m_luna_sound_play(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L, 1, LUNA_SOUND_MT);
-	// subtract 1 here so Sound:play(1) won't repeat; Mix_PlayChannel plays one
-	// more time than the argument passed
-	int loops = luaL_optint(L, 2, -1) - 1; 
+	// default is no repeats
+	int loops = luaL_optint(L, 2, 0); 
 	// we can just use s->channel here because it's initially set to -1
 	// so we automatically play on an unreserved channel. Then we store the
 	// channel we actually used in our userdata so Sound:pause() etc. works.
-	int chan Mix_PlayChannel(s->channel, s->chunk, loops);
+	int chan = Mix_PlayChannel(s->channel, s->chunk, loops);
 	s->channel = chan;
 	return 0;
 }
 
-// luna.Sound:play_timed(ms:int, [times = infinite]) -> ()
+// luna.Sound:play_timed(ms:int, [repeats:int = 0]) -- -1 repeats = forever
 static int m_luna_sound_play_timed(lua_State *L)
 {
-	// TODO here!!
+	// same implementation as m_luna_sound_play
+	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
+	int ms = luaL_checkinteger(L,2);
+	int loops = luaL_optint(L,3,0);
+	int chan = Mix_PlayChannelTimed(s->channel, s->chunk, loops, ms);
+	s->channel = chan;
+	return 0;
 }
 
+// TODO:
+// luna.Sound:fade_in(fade_ms:int, [repeats:int = 0]) -- -1 loops forever
+// luna.Sound:fade_in_timed(f_ms:int, ms:int, [rpts:int=0]) -- -1 rpts=forever
+// luna.Sound:pause()
+// luna.Sound:volume() -> int
+// luna.Sound:set_volume(vol: int)
+// luna.Sound:halt()
+// luna.Sound:halt_timed(ms: int)
+// luna.Sound:fade_out(ms: int)
+// luna.Sound:is_playing() -> boolean
+// luna.Sound:is_paused() -> boolean
+// luna.Sound:is_fading() -> is_fading:boolean, dir: 'in' | 'out'
+
+// metatable def
 static luaL_Reg m_luna_sound_metatable[] = {
 	{"play", &m_luna_sound_play},
+	{"play_timed", &m_luna_sound_play_timed},
 	{NULL,NULL}
 };
 
