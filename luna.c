@@ -32,8 +32,10 @@ typedef struct luna_Window {
 
 typedef struct luna_Texture {
 	SDL_Texture *texture;
-	int w;
-	int h;
+	int raw_w;
+	int raw_h;
+	SDL_Rect frame;
+	int is_framed;
 } luna_Texture;
 
 typedef struct luna_Sound {
@@ -1114,11 +1116,12 @@ static int m_luna_window_close(lua_State *L)
 //  	stages drawing; need to paint to actually display
 static int m_luna_window_draw(lua_State *L) 
 {
+	// XXX ADD FRAMING CODE
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	luna_Texture *tex = luaL_checkudata(L,2,LUNA_TEXTURE_MT);
 	int x = luaL_checkinteger(L,3);
 	int y = luaL_checkinteger(L,4);
-	SDL_Rect dst = (SDL_Rect) {.x = x, .y = y, .w = tex->w, .h = tex->h};
+	SDL_Rect dst = (SDL_Rect) {.x = x, .y = y, .w = tex->raw_w, .h = tex->raw_h};
 	
 	SDL_RenderCopy(win->renderer, tex->texture, NULL, &dst);
 	return 0;
@@ -1183,8 +1186,11 @@ static int c_luna_texture_new(lua_State *L)
 				IMG_GetError());
 		lua_error(L);
 	}
-	tex->w = surf->w;
-	tex->h = surf->h;
+	tex->raw_w = surf->w;
+	tex->raw_h = surf->h;
+	// start out with no cropping
+	tex->is_framed = 0;
+	tex->frame = (SDL_Rect) {};
 	// create our texture
 	tex->texture = SDL_CreateTextureFromSurface(win->renderer,surf);
 	if (!tex->texture) {
@@ -1200,6 +1206,82 @@ static int c_luna_texture_new(lua_State *L)
 	luaL_setmetatable(L,LUNA_TEXTURE_MT);
 	return 1;
 }
+
+// luna.Texture:raw_w() -> int
+static int m_luna_texture_raw_w(lua_State *L)
+{
+	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
+	lua_pushinteger(L,t->raw_w);
+	return 1;
+}
+
+// luna.Texture:raw_h() -> int
+static int m_luna_texture_raw_h(lua_State *L)
+{
+	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
+	lua_pushinteger(L,t->raw_h);
+	return 1;
+}
+
+// luna.Texture:frame() -> table{x:int, y:int, w:int, h:int}
+static int m_luna_texture_frame(lua_State *L)
+{
+	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
+	if (t->is_framed) {
+		lua_newtable(L);
+		lua_pushinteger(L,t->frame.x);
+		lua_setfield(L,-2,"x");
+		lua_pushinteger(L,t->frame.y);
+		lua_setfield(L,-2,"y");
+		lua_pushinteger(L,t->frame.w);
+		lua_setfield(L,-2,"w");
+		lua_pushinteger(L,t->frame.h);
+		lua_setfield(L,-2,"h");
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+// luna.Texture:set_frame(dims:table{x:int, y:int, w:int, h:int})
+// OR
+// luna.Texture:set_frame(x:int, y:int, w:int, h:int)
+static int m_luna_texture_set_frame(lua_State *L)
+{
+	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
+	// see if we got a table or 4 ints
+	int nargs = lua_gettop(L);
+	
+	// table version
+	if (nargs == 2) {
+		luaL_checktype(L,2,LUA_TTABLE);
+
+		lua_getfield(L,2,"x");
+		t->frame.x = lua_tointeger(L,-1);
+		lua_pop(L,1);
+		
+		lua_getfield(L,2,"y");
+		t->frame.y = lua_tointeger(L,-1);
+		lua_pop(L,1);
+
+		lua_getfield(L,2,"w");
+		t->frame.w = lua_tointeger(L,-1);
+		lua_pop(L,1);
+
+		lua_getfield(L,2,"h");
+		t->frame.h = lua_tointeger(L,-1);
+		lua_pop(L,1);
+	} else {
+		t->frame.x = luaL_checkinteger(L,2);
+		t->frame.y = luaL_checkinteger(L,3);
+		t->frame.w = luaL_checkinteger(L,4);
+		t->frame.h = luaL_checkinteger(L,5);
+	}
+	t->is_framed = 1;
+	return 0;
+	// XXX HERE
+}
+// luna.Texture:is_framed() -> boolean
+// luna.Texture:unframe()
 
 // luna.Texture:__gc() (garbage collection)
 static int m_luna_texture_gc(lua_State *L)
