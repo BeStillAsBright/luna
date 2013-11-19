@@ -1427,14 +1427,60 @@ static int l_luna_sound_new(lua_State *L)
 
 // TODO:
 // luna.sound.pause_all()
+static int l_luna_sound_pause_all(lua_State *L)
+{
+	Mix_Pause(-1);
+	return 0;
+}
+
 // luna.sound.resume_all()
+static int l_luna_sound_resume_all(lua_State *L)
+{
+	Mix_Resume(-1);
+	return 0;
+}
+
 // luna.sound.halt_all()
-// luna.sound.play_all()
+static int l_luna_sound_halt_all(lua_State *L)
+{
+	Mix_HaltChannel(-1);
+	return 0;
+}
+
 // luna.sound.halt_timed_all(ms: int)
+static int l_luna_sound_halt_timed_all(lua_State *L)
+{
+	int ms = luaL_checkinteger(L,1);
+	Mix_ExpireChannel(-1, ms);
+	return 0;
+}
 // luna.sound.fade_out_all(ms: int)
+static int l_luna_sound_fade_out_all(lua_State *L)
+{
+	int ms = luaL_checkinteger(L,1);
+	Mix_FadeOutChannel(-1, ms);
+	return 0;
+}
+
 // luna.sound.set_volume_all(volume: int)
+static int l_luna_sound_set_volume_all(lua_State *L)
+{
+	int vol = luaL_checkinteger(L,1);
+	Mix_Volume(-1, vol);
+}
 // luna.sound.number_playing() -> int
+static int l_luna_sound_number_playing(lua_State *L)
+{
+	int playing = Mix_Playing(-1);
+	lua_pushinteger(L,playing);
+	return 1;
+}
 // luna.sound.number_paused() -> int
+static int l_luna_sound_number_paused(lua_State *L)
+{
+	int paused = Mix_Paused(-1);
+	lua_pushinteger(L,paused);
+	return 1;
 
 // Module def
 static luaL_Reg l_luna_sound_module_fns[] = {
