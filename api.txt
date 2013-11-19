@@ -1,0 +1,85 @@
+luna = {
+	function init()
+	function quit()
+	function delay(ms: integer)
+
+	module events = {
+		function poll() -> type:string, event:table
+	}
+
+	module window = {
+		function new(w:int, h:int, fullscreen:boolean) -> luna.Window
+	}
+
+	class Window = {
+		method show()
+		method hide()
+		method close()
+		method draw(tex:luna.Texture, x:int, y:int)
+		method paint()
+		method clear()
+		method __gc()
+	}
+
+	module texture = {
+		function new(window:luna.Window, filename:string) -> luna.Texture
+	}
+
+	class Texture = {
+		method __gc()
+	}
+
+	module music = {
+		function new(filename:string) -> luna.Music
+		function pause()
+		function resume()
+		function rewind()
+		function volume() -> int
+		function set_volume(volume:int)
+		function halt()
+		function fade_out(ms:int)
+		function set_position(seconds:number)
+		function is_paused() -> boolean
+		function is_playing() -> boolean
+		function is_fading() -> fading:boolean, direction:string('in' | 'out')
+	}
+	
+	class Music {
+		-- methods with optional loops param will play forever by default
+		method play([loops:int = -1]) -- loop forever w/ no argument
+		method play_from(start_pos:number, [loops:int = -1])
+		method fade_in(ms:int, [loops:int = -1])
+		method fade_in_from(pos:number, ms:int, [loops:int = -1])
+		method __gc()
+	}
+
+	module sound = {
+		function new(filename:string) -> luna.Sound
+		function pause_all()
+		function resume_all()
+		function halt_all()
+		function halt_timed_all(ms:int)
+		function fade_out_all(ms:int)
+		function set_volume_all(volume:int)
+		function number_playing() -> int
+		function number_paused() -> int
+	}
+	class Sound = {
+		-- methods with optional repeats play forever with input of -1
+		method play([repeats:int = 0])
+		method play_timed(ms:int, [repeats:int = 0])
+		method fade_in(ms:int, [repeats:int = 0])
+		method fade_in_timed(fade_ms:int, time_ms;int, [repeats:int = 0])
+		method pause()
+		method resume()
+		method volume() -> int
+		method set_volume(volume: int)
+		method halt()
+		method halt_timed(ms:int)
+		method fade_out(ms:int)
+		method is_playing() -> boolean
+		method is_paused() -> boolean
+		method is_fading() -> fading:boolean, direction:string('in' | 'out')
+		method __gc()
+	}
+}
