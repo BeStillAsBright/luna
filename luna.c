@@ -1171,7 +1171,7 @@ static int c_luna_texture_new(lua_State *L)
 {
 	// TODO maybe add colorkey support?
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
-	char *fname = luaL_checkstring(L,2);
+	const char *fname = luaL_checkstring(L,2);
 
 	luna_Texture *tex = lua_newuserdata(L, sizeof(*tex));
 	// get our surface from the filename
@@ -1224,7 +1224,7 @@ static const luaL_Reg m_luna_texture_metatable[] =  {
 // luna.music.new(filename:string) -> luna.Music
 static int c_luna_music_new(lua_State *L)
 {
-	char *filename = luaL_checkstring(L,1);
+	const char *filename = luaL_checkstring(L,1);
 
 	luna_Music *m = lua_newuserdata(L,sizeof(*m));
 	m->music = Mix_LoadMUS(filename);
@@ -1325,7 +1325,7 @@ static int l_luna_music_is_fading(lua_State *L)
 		case MIX_FADING_OUT:
 			lua_pushboolean(L,1);
 			lua_pushliteral(L,"out");
-			break
+			break;
 	}
 	return 2;
 }
@@ -1415,7 +1415,7 @@ static luaL_Reg m_luna_music_metatable[] = {
 // luna.sound.new(filename:string) -> luna.Sound
 static int l_luna_sound_new(lua_State *L)
 {
-	char *fname = luaL_checkstring(L,1);
+	const char *fname = luaL_checkstring(L,1);
 	luna_Sound *s = lua_newuserdata(L, sizeof(*s));
 
 	s->chunk = Mix_LoadWAV(fname);
@@ -1466,6 +1466,7 @@ static int l_luna_sound_set_volume_all(lua_State *L)
 {
 	int vol = luaL_checkinteger(L,1);
 	Mix_Volume(-1, vol);
+	return 0;
 }
 // luna.sound.number_playing() -> int
 static int l_luna_sound_number_playing(lua_State *L)
@@ -1480,6 +1481,7 @@ static int l_luna_sound_number_paused(lua_State *L)
 	int paused = Mix_Paused(-1);
 	lua_pushinteger(L,paused);
 	return 1;
+}
 
 // Module def
 static luaL_Reg l_luna_sound_module_fns[] = {
@@ -1525,7 +1527,6 @@ static int m_luna_sound_play_timed(lua_State *L)
 	return 0;
 }
 
-// TODO:
 // luna.Sound:fade_in(fade_ms:int, [repeats:int = 0]) -- -1 loops forever
 static int m_luna_sound_fade_in(lua_State *L)
 {
@@ -1544,7 +1545,7 @@ static int m_luna_sound_fade_in_timed(lua_State *L)
 	int fade_ms = luaL_checkinteger(L,2);
 	int ms = luaL_checkinteger(L,3);
 	int loops = luaL_optint(L,4,0);
-	int chan = Mix_FadeInChannel(s->channel, s->chunk, loops, fade_ms, ms);
+	int chan = Mix_FadeInChannelTimed(s->channel, s->chunk, loops, fade_ms, ms);
 	s->channel = chan;
 	return 0;
 }
@@ -1607,7 +1608,7 @@ static int m_luna_sound_halt(lua_State *L)
 // luna.Sound:halt_timed(ms: int)
 static int m_luna_sound_halt_timed(lua_State *L)
 {
-	luna_Sound *S = luaL_checkudata(L,1,LUNA_SOUND_MT);
+	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int ms = luaL_checkinteger(L,2);
 	if (s->channel != -1) {
 		Mix_ExpireChannel(s->channel, ms);
