@@ -1116,14 +1116,22 @@ static int m_luna_window_close(lua_State *L)
 //  	stages drawing; need to paint to actually display
 static int m_luna_window_draw(lua_State *L) 
 {
-	// XXX ADD FRAMING CODE
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	luna_Texture *tex = luaL_checkudata(L,2,LUNA_TEXTURE_MT);
 	int x = luaL_checkinteger(L,3);
 	int y = luaL_checkinteger(L,4);
+
 	SDL_Rect dst = (SDL_Rect) {.x = x, .y = y, .w = tex->raw_w, .h = tex->raw_h};
 	
-	SDL_RenderCopy(win->renderer, tex->texture, NULL, &dst);
+	if (tex->is_framed) {
+		dst.w = tex->frame.w;
+		dst.h = tex->frame.h;
+		SDL_RenderCopy(win->renderer, tex->texture, &tex->frame, &dst);
+	} else {
+		dst.w = tex->raw_w;
+		dst.h = tex->raw_h;
+		SDL_RenderCopy(win->renderer, tex->texture, NULL, &dst);
+	}
 	return 0;
 }
 
@@ -1188,7 +1196,7 @@ static int c_luna_texture_new(lua_State *L)
 	}
 	tex->raw_w = surf->w;
 	tex->raw_h = surf->h;
-	// start out with no cropping
+	// start out with no framing
 	tex->is_framed = 0;
 	tex->frame = (SDL_Rect) {};
 	// create our texture
@@ -1242,13 +1250,14 @@ static int m_luna_texture_frame(lua_State *L)
 	}
 	return 1;
 }
+
 // luna.Texture:set_frame(dims:table{x:int, y:int, w:int, h:int})
 // OR
 // luna.Texture:set_frame(x:int, y:int, w:int, h:int)
 static int m_luna_texture_set_frame(lua_State *L)
 {
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
-	// see if we got a table or 4 ints
+	// see if we got a table or 4 ints; 2 args = table, 5 args = ints
 	int nargs = lua_gettop(L);
 	
 	// table version
@@ -1278,10 +1287,22 @@ static int m_luna_texture_set_frame(lua_State *L)
 	}
 	t->is_framed = 1;
 	return 0;
-	// XXX HERE
 }
 // luna.Texture:is_framed() -> boolean
+static int m_luna_texture_is_framed(lua_State *L)
+{
+	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
+	lua_pushboolean(L,t->is_framed);
+	return 1;
+}
+
 // luna.Texture:unframe()
+static int m_luna_texture_unframe(lua_State *L)
+{
+	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
+	t->is_framed = 0;
+	return 0;
+}
 
 // luna.Texture:__gc() (garbage collection)
 static int m_luna_texture_gc(lua_State *L)
@@ -1297,6 +1318,12 @@ static const luaL_Reg l_luna_texture_module_fns[] = {
 };
 
 static const luaL_Reg m_luna_texture_metatable[] =  {
+	{"raw_w", &m_luna_texture_raw_w},
+	{"raw_h", &m_luna_texture_raw_h},
+	{"frame", &m_luna_texture_frame},
+	{"set_frame", &m_luna_texture_set_frame},
+	{"is_framed", &m_luna_texture_is_framed},
+	{"unframe", &m_luna_texture_unframe},
 	{"__gc", &m_luna_texture_gc},
 	{NULL,NULL}
 };
