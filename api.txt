@@ -26,6 +26,13 @@ luna = {
 	}
 
 	class Texture = {
+		method raw_w() -> int
+		method raw_h() -> int
+		method is_framed() -> boolean
+		method frame() -> table{x:int, y:int, w:int, h:int}
+		method set_frame(x:int, y:int, w:int, h:int)
+		method set_frame(table{x:int, y:int, w:int, h:int})
+		method unframe()
 		method __gc()
 	}
 
