@@ -34,7 +34,7 @@ function main()
 	while true do
 		etype, event = luna.event.poll()
 		if etype == 'key_down' then
-			key = event.sym
+			key = event.key
 			if key == 'w' then
 				my_smile:move(0,-5)
 			elseif key == 's' then
