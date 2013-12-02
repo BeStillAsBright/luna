@@ -23,10 +23,10 @@ end
 
 function main()
 	luna.init()
-	win = luna.Window.new(640,480,false)
+	win = luna.window.new(640,480,false)
 
-	texlib.smile = luna.Texture.new(win, 'smile.png')
-	texlib.grass = luna.Texture.new(win, 'grass.png')
+	texlib.smile = luna.texture.new(win, 'smile.png')
+	texlib.grass = luna.texture.new(win, 'grass.png')
 
 	my_smile = Smile:new()
 	-- other_smile = Smile:new()
