@@ -55,7 +55,7 @@ typedef struct luna_Music {
 // ///////////////////
 
 // luna.init()
-static int l_luna_init(lua_State *L)
+static int luna_init(lua_State *L)
 {
 	SDL_SetMainReady(); // needed because we're using SDL_MAIN_HANDLED
 	SDL_Init(SDL_INIT_EVERYTHING); // just init everything (even if unused)
@@ -85,7 +85,7 @@ static int l_luna_init(lua_State *L)
 }
 
 // luna.quit()
-static int l_luna_quit(lua_State *L)
+static int luna_quit(lua_State *L)
 {
 	Mix_CloseAudio();
 	Mix_Quit();
@@ -95,17 +95,17 @@ static int l_luna_quit(lua_State *L)
 }
 
 // luna.delay(ms:int)
-static int l_luna_delay(lua_State *L)
+static int luna_delay(lua_State *L)
 {
 	int ms = luaL_checkinteger(L,1);
 	SDL_Delay(ms);
 	return 0;
 }
 
-static const luaL_Reg l_luna_module_fns[] = {
-	{"init", &l_luna_init},
-	{"quit", &l_luna_quit},
-	{"delay", &l_luna_delay},
+static const luaL_Reg luna_module_fns[] = {
+	{"init", &luna_init},
+	{"quit", &luna_quit},
+	{"delay", &luna_delay},
 	{NULL,NULL}
 };
 
@@ -1428,7 +1428,7 @@ static void lh_luna_make_window_event(lua_State *L, SDL_Event *e)
 }
 
 // luna.event.poll() -> type: string, event: luna.Event
-static int l_luna_event_poll(lua_State *L)
+static int luna_event_poll(lua_State *L)
 {
 	SDL_Event event;
 	SDL_PollEvent(&event);
@@ -1504,8 +1504,8 @@ static int l_luna_event_poll(lua_State *L)
 }
 
 // luna.event module
-static const luaL_Reg l_luna_event_module_fns[] = {
-	{"poll", &l_luna_event_poll},
+static const luaL_Reg luna_event_module_fns[] = {
+	{"poll", &luna_event_poll},
 	{NULL,NULL}
 };
 
@@ -1514,7 +1514,7 @@ static const luaL_Reg l_luna_event_module_fns[] = {
 // //////////////////////////////////
 
 // luna.Window.new(w:int,h:int,fullscreen:boolean) -> luna.Window
-static int c_luna_window_new(lua_State *L)
+static int luna_c_window_new(lua_State *L)
 {
 	int w = luaL_checkinteger(L,1);
 	int h = luaL_checkinteger(L,2);
@@ -1540,14 +1540,14 @@ static int c_luna_window_new(lua_State *L)
 }
 
 // luna.Window:show()
-static int m_luna_window_show(lua_State *L)
+static int luna_m_window_show(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	SDL_ShowWindow(win->window);
 	return 0;
 }
 
-static int m_luna_window_hide(lua_State *L)
+static int luna_m_window_hide(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	SDL_HideWindow(win->window);
@@ -1555,7 +1555,7 @@ static int m_luna_window_hide(lua_State *L)
 }
 
 // luna.Window:close()
-static int m_luna_window_close(lua_State *L)
+static int luna_m_window_close(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	if (!win->closed) {
@@ -1568,7 +1568,7 @@ static int m_luna_window_close(lua_State *L)
 
 //  luna.Window:draw(tex: luna.Texture, x:int, y:int)
 //  	stages drawing; need to paint to actually display
-static int m_luna_window_draw(lua_State *L) 
+static int luna_m_window_draw(lua_State *L) 
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	luna_Texture *tex = luaL_checkudata(L,2,LUNA_TEXTURE_MT);
@@ -1590,7 +1590,7 @@ static int m_luna_window_draw(lua_State *L)
 }
 
 // luna.Window:paint()
-static int m_luna_window_paint(lua_State *L)
+static int luna_m_window_paint(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	SDL_RenderPresent(win->renderer);
@@ -1598,7 +1598,7 @@ static int m_luna_window_paint(lua_State *L)
 }
 
 // luna.Window:clear()
-static int m_luna_window_clear(lua_State *L)
+static int luna_m_window_clear(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	SDL_RenderClear(win->renderer);
@@ -1606,26 +1606,26 @@ static int m_luna_window_clear(lua_State *L)
 }
 
 // luna.Window.__gc() -- called on garbage collection
-static int m_luna_window_gc(lua_State *L)
+static int luna_m_window_gc(lua_State *L)
 {
 	// all we need to do is close it
-	m_luna_window_close(L);
+	luna_m_window_close(L);
 	return 0;
 }
 
-static const luaL_Reg l_luna_window_module_fns[] = {
-	{"new", &c_luna_window_new},
+static const luaL_Reg luna_window_module_fns[] = {
+	{"new", &luna_c_window_new},
 	{NULL,NULL}
 };
 
-static const luaL_Reg m_luna_window_metatable[] = {
-	{"close", &m_luna_window_close},
-	{"draw", &m_luna_window_draw},
-	{"paint", &m_luna_window_paint},
-	{"clear", &m_luna_window_clear},
-	{"show", &m_luna_window_show},
-	{"hide", &m_luna_window_hide},
-	{"__gc", &m_luna_window_gc},
+static const luaL_Reg luna_m_window_metatable[] = {
+	{"close", &luna_m_window_close},
+	{"draw", &luna_m_window_draw},
+	{"paint", &luna_m_window_paint},
+	{"clear", &luna_m_window_clear},
+	{"show", &luna_m_window_show},
+	{"hide", &luna_m_window_hide},
+	{"__gc", &luna_m_window_gc},
 	{NULL,NULL}
 };
 
@@ -1634,7 +1634,7 @@ static const luaL_Reg m_luna_window_metatable[] = {
 // ///////////////
 
 // luna.Texture.new(window:luna.Window,filename:string) -> luna.Texture
-static int c_luna_texture_new(lua_State *L)
+static int luna_c_texture_new(lua_State *L)
 {
 	// TODO maybe add colorkey support?
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
@@ -1670,7 +1670,7 @@ static int c_luna_texture_new(lua_State *L)
 }
 
 // luna.Texture:raw_w() -> int
-static int m_luna_texture_raw_w(lua_State *L)
+static int luna_m_texture_raw_w(lua_State *L)
 {
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	lua_pushinteger(L,t->raw_w);
@@ -1678,7 +1678,7 @@ static int m_luna_texture_raw_w(lua_State *L)
 }
 
 // luna.Texture:raw_h() -> int
-static int m_luna_texture_raw_h(lua_State *L)
+static int luna_m_texture_raw_h(lua_State *L)
 {
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	lua_pushinteger(L,t->raw_h);
@@ -1686,7 +1686,7 @@ static int m_luna_texture_raw_h(lua_State *L)
 }
 
 // luna.Texture:frame() -> table{x:int, y:int, w:int, h:int}
-static int m_luna_texture_frame(lua_State *L)
+static int luna_m_texture_frame(lua_State *L)
 {
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	if (t->is_framed) {
@@ -1708,7 +1708,7 @@ static int m_luna_texture_frame(lua_State *L)
 // luna.Texture:set_frame(dims:table{x:int, y:int, w:int, h:int})
 // OR
 // luna.Texture:set_frame(x:int, y:int, w:int, h:int)
-static int m_luna_texture_set_frame(lua_State *L)
+static int luna_m_texture_set_frame(lua_State *L)
 {
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	// see if we got a table or 4 ints; 2 args = table, 5 args = ints
@@ -1743,7 +1743,7 @@ static int m_luna_texture_set_frame(lua_State *L)
 	return 0;
 }
 // luna.Texture:is_framed() -> boolean
-static int m_luna_texture_is_framed(lua_State *L)
+static int luna_m_texture_is_framed(lua_State *L)
 {
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	lua_pushboolean(L,t->is_framed);
@@ -1751,7 +1751,7 @@ static int m_luna_texture_is_framed(lua_State *L)
 }
 
 // luna.Texture:unframe()
-static int m_luna_texture_unframe(lua_State *L)
+static int luna_m_texture_unframe(lua_State *L)
 {
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	t->is_framed = 0;
@@ -1759,26 +1759,26 @@ static int m_luna_texture_unframe(lua_State *L)
 }
 
 // luna.Texture:__gc() (garbage collection)
-static int m_luna_texture_gc(lua_State *L)
+static int luna_m_texture_gc(lua_State *L)
 {
 	luna_Texture *tex = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	SDL_DestroyTexture(tex->texture);
 	return 0;
 }
 
-static const luaL_Reg l_luna_texture_module_fns[] = {
-	{"new", &c_luna_texture_new},
+static const luaL_Reg luna_texture_module_fns[] = {
+	{"new", &luna_c_texture_new},
 	{NULL,NULL}
 };
 
-static const luaL_Reg m_luna_texture_metatable[] =  {
-	{"raw_w", &m_luna_texture_raw_w},
-	{"raw_h", &m_luna_texture_raw_h},
-	{"frame", &m_luna_texture_frame},
-	{"set_frame", &m_luna_texture_set_frame},
-	{"is_framed", &m_luna_texture_is_framed},
-	{"unframe", &m_luna_texture_unframe},
-	{"__gc", &m_luna_texture_gc},
+static const luaL_Reg luna_m_texture_metatable[] =  {
+	{"raw_w", &luna_m_texture_raw_w},
+	{"raw_h", &luna_m_texture_raw_h},
+	{"frame", &luna_m_texture_frame},
+	{"set_frame", &luna_m_texture_set_frame},
+	{"is_framed", &luna_m_texture_is_framed},
+	{"unframe", &luna_m_texture_unframe},
+	{"__gc", &luna_m_texture_gc},
 	{NULL,NULL}
 };
 
@@ -1787,7 +1787,7 @@ static const luaL_Reg m_luna_texture_metatable[] =  {
 // ///////////////////////
 
 // luna.music.new(filename:string) -> luna.Music
-static int c_luna_music_new(lua_State *L)
+static int luna_c_music_new(lua_State *L)
 {
 	const char *filename = luaL_checkstring(L,1);
 
@@ -1803,28 +1803,28 @@ static int c_luna_music_new(lua_State *L)
 }
 
 // luna.music.pause()
-static int l_luna_music_pause(lua_State *L)
+static int luna_music_pause(lua_State *L)
 {
 	Mix_PauseMusic();
 	return 0;
 }
 
 // luna.music.resume()
-static int l_luna_music_resume(lua_State *L)
+static int luna_music_resume(lua_State *L)
 {
 	Mix_ResumeMusic();
 	return 0;
 }
 
 // luna.music.rewind()
-static int l_luna_music_rewind(lua_State *L)
+static int luna_music_rewind(lua_State *L)
 {
 	Mix_RewindMusic();
 	return 0;
 }
 
 // luna.music.set_volume(volume:int)
-static int l_luna_music_set_volume(lua_State *L)
+static int luna_music_set_volume(lua_State *L)
 {
 	int volume = luaL_checkinteger(L,1);
 	Mix_VolumeMusic(volume);
@@ -1832,7 +1832,7 @@ static int l_luna_music_set_volume(lua_State *L)
 }
 
 // luna.music.volume() -> int
-static int l_luna_music_volume(lua_State *L)
+static int luna_music_volume(lua_State *L)
 {
 	int volume = Mix_VolumeMusic(-1);
 	lua_pushinteger(L,volume);
@@ -1840,14 +1840,14 @@ static int l_luna_music_volume(lua_State *L)
 }
 
 // luna.music.halt()
-static int l_luna_music_halt(lua_State *L)
+static int luna_music_halt(lua_State *L)
 {
 	Mix_HaltMusic();
 	return 0;
 }
 
 // luna.music.fade_out(ms:int)
-static int l_luna_music_fade_out(lua_State *L)
+static int luna_music_fade_out(lua_State *L)
 {
 	int ms = luaL_checkinteger(L,1);
 	Mix_FadeOutMusic(ms);
@@ -1855,7 +1855,7 @@ static int l_luna_music_fade_out(lua_State *L)
 }
 
 // luna.music.set_position(seconds:number)
-static int l_luna_music_set_position(lua_State *L)
+static int luna_music_set_position(lua_State *L)
 {
 	double seconds = luaL_checknumber(L,1);
 	Mix_RewindMusic();
@@ -1864,19 +1864,19 @@ static int l_luna_music_set_position(lua_State *L)
 }
 
 // luna.music.is_paused() -> boolean
-static int l_luna_music_is_paused(lua_State *L)
+static int luna_music_is_paused(lua_State *L)
 {
 	lua_pushboolean(L,Mix_PausedMusic());
 	return 1;
 }
 // luna.music.is_playing() -> boolean
-static int l_luna_music_is_playing(lua_State *L)
+static int luna_music_is_playing(lua_State *L)
 {
 	lua_pushboolean(L,Mix_PlayingMusic());
 	return 1;
 }
 // luna.music.is_fading() -> fading:boolean, dir:string['in' | 'out']
-static int l_luna_music_is_fading(lua_State *L)
+static int luna_music_is_fading(lua_State *L)
 {
 	switch (Mix_FadingMusic()) {
 		case MIX_NO_FADING:
@@ -1895,19 +1895,19 @@ static int l_luna_music_is_fading(lua_State *L)
 	return 2;
 }
 
-static luaL_Reg l_luna_music_module_fns[] = {
-	{"new", &c_luna_music_new},
-	{"pause", &l_luna_music_pause},
-	{"resume", &l_luna_music_resume},
-	{"rewind", &l_luna_music_rewind},
-	{"set_volume", &l_luna_music_set_volume},
-	{"volume", &l_luna_music_volume},
-	{"halt", &l_luna_music_halt},
-	{"fade_out", &l_luna_music_fade_out},
-	{"set_position", &l_luna_music_set_position},
-	{"is_playing", &l_luna_music_is_playing},
-	{"is_paused", &l_luna_music_is_paused},
-	{"is_fading", &l_luna_music_is_fading},
+static luaL_Reg luna_music_module_fns[] = {
+	{"new", &luna_c_music_new},
+	{"pause", &luna_music_pause},
+	{"resume", &luna_music_resume},
+	{"rewind", &luna_music_rewind},
+	{"set_volume", &luna_music_set_volume},
+	{"volume", &luna_music_volume},
+	{"halt", &luna_music_halt},
+	{"fade_out", &luna_music_fade_out},
+	{"set_position", &luna_music_set_position},
+	{"is_playing", &luna_music_is_playing},
+	{"is_paused", &luna_music_is_paused},
+	{"is_fading", &luna_music_is_fading},
 	{NULL,NULL}
 };
 
@@ -1916,7 +1916,7 @@ static luaL_Reg l_luna_music_module_fns[] = {
 // /////////////////////
 
 // luna.Music:play([loops:int = -1]) -- loop forever if no argument!
-static int m_luna_music_play(lua_State *L)
+static int luna_m_music_play(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	int loops = luaL_optint(L,2,-1); // loop forever if no argument
@@ -1925,7 +1925,7 @@ static int m_luna_music_play(lua_State *L)
 }
 
 // luna.Music:play_from(start_pos:number, [loops:int = -1])
-static int m_luna_play_from(lua_State *L)
+static int luna_m_play_from(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	double pos = luaL_checknumber(L,2);
@@ -1935,7 +1935,7 @@ static int m_luna_play_from(lua_State *L)
 }
 
 // luna.Music:fade_in(ms:int, [loops:int = -1])
-static int m_luna_music_fade_in(lua_State *L)
+static int luna_m_music_fade_in(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	int ms = luaL_checkinteger(L,2);
@@ -1945,7 +1945,7 @@ static int m_luna_music_fade_in(lua_State *L)
 }
 
 // luna.Music:fade_in_from(pos:number, ms:int, [loops:int = -1])
-static int m_luna_music_fade_in_from(lua_State *L)
+static int luna_m_music_fade_in_from(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	double pos = luaL_checknumber(L,2);
@@ -1956,7 +1956,7 @@ static int m_luna_music_fade_in_from(lua_State *L)
 }
 
 // luna.Music.__gc() -- garbage collection
-static int m_luna_music_gc(lua_State *L)
+static int luna_m_music_gc(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	Mix_FreeMusic(m->music);
@@ -1964,12 +1964,12 @@ static int m_luna_music_gc(lua_State *L)
 }
 
 
-static luaL_Reg m_luna_music_metatable[] = {
-	{"play", &m_luna_music_play},
-	{"play_from", &m_luna_play_from},
-	{"fade_in", &m_luna_music_fade_in},
-	{"fade_in_from", &m_luna_music_fade_in_from},
-	{"__gc", &m_luna_music_gc},
+static luaL_Reg luna_m_music_metatable[] = {
+	{"play", &luna_m_music_play},
+	{"play_from", &luna_m_play_from},
+	{"fade_in", &luna_m_music_fade_in},
+	{"fade_in_from", &luna_m_music_fade_in_from},
+	{"__gc", &luna_m_music_gc},
 	{NULL,NULL}
 };
 
@@ -1978,7 +1978,7 @@ static luaL_Reg m_luna_music_metatable[] = {
 // ///////////////////////
 
 // luna.sound.new(filename:string) -> luna.Sound
-static int l_luna_sound_new(lua_State *L)
+static int luna_sound_new(lua_State *L)
 {
 	const char *fname = luaL_checkstring(L,1);
 	luna_Sound *s = lua_newuserdata(L, sizeof(*s));
@@ -1991,35 +1991,35 @@ static int l_luna_sound_new(lua_State *L)
 }
 
 // luna.sound.pause_all()
-static int l_luna_sound_pause_all(lua_State *L)
+static int luna_sound_pause_all(lua_State *L)
 {
 	Mix_Pause(-1);
 	return 0;
 }
 
 // luna.sound.resume_all()
-static int l_luna_sound_resume_all(lua_State *L)
+static int luna_sound_resume_all(lua_State *L)
 {
 	Mix_Resume(-1);
 	return 0;
 }
 
 // luna.sound.halt_all()
-static int l_luna_sound_halt_all(lua_State *L)
+static int luna_sound_halt_all(lua_State *L)
 {
 	Mix_HaltChannel(-1);
 	return 0;
 }
 
 // luna.sound.halt_timed_all(ms: int)
-static int l_luna_sound_halt_timed_all(lua_State *L)
+static int luna_sound_halt_timed_all(lua_State *L)
 {
 	int ms = luaL_checkinteger(L,1);
 	Mix_ExpireChannel(-1, ms);
 	return 0;
 }
 // luna.sound.fade_out_all(ms: int)
-static int l_luna_sound_fade_out_all(lua_State *L)
+static int luna_sound_fade_out_all(lua_State *L)
 {
 	int ms = luaL_checkinteger(L,1);
 	Mix_FadeOutChannel(-1, ms);
@@ -2027,21 +2027,21 @@ static int l_luna_sound_fade_out_all(lua_State *L)
 }
 
 // luna.sound.set_volume_all(volume: int)
-static int l_luna_sound_set_volume_all(lua_State *L)
+static int luna_sound_set_volume_all(lua_State *L)
 {
 	int vol = luaL_checkinteger(L,1);
 	Mix_Volume(-1, vol);
 	return 0;
 }
 // luna.sound.number_playing() -> int
-static int l_luna_sound_number_playing(lua_State *L)
+static int luna_sound_number_playing(lua_State *L)
 {
 	int playing = Mix_Playing(-1);
 	lua_pushinteger(L,playing);
 	return 1;
 }
 // luna.sound.number_paused() -> int
-static int l_luna_sound_number_paused(lua_State *L)
+static int luna_sound_number_paused(lua_State *L)
 {
 	int paused = Mix_Paused(-1);
 	lua_pushinteger(L,paused);
@@ -2049,16 +2049,16 @@ static int l_luna_sound_number_paused(lua_State *L)
 }
 
 // Module def
-static luaL_Reg l_luna_sound_module_fns[] = {
-	{"new", &l_luna_sound_new},
-	{"pause_all", &l_luna_sound_pause_all},
-	{"resume_all", &l_luna_sound_resume_all},
-	{"halt_all", &l_luna_sound_halt_all},
-	{"halt_timed_all", &l_luna_sound_halt_timed_all},
-	{"fade_out_all", &l_luna_sound_fade_out_all},
-	{"set_volume_all", &l_luna_sound_set_volume_all},
-	{"number_playing", &l_luna_sound_number_playing},
-	{"number_paused", &l_luna_sound_number_paused},
+static luaL_Reg luna_sound_module_fns[] = {
+	{"new", &luna_sound_new},
+	{"pause_all", &luna_sound_pause_all},
+	{"resume_all", &luna_sound_resume_all},
+	{"halt_all", &luna_sound_halt_all},
+	{"halt_timed_all", &luna_sound_halt_timed_all},
+	{"fade_out_all", &luna_sound_fade_out_all},
+	{"set_volume_all", &luna_sound_set_volume_all},
+	{"number_playing", &luna_sound_number_playing},
+	{"number_paused", &luna_sound_number_paused},
 	{NULL,NULL}
 };
 
@@ -2067,7 +2067,7 @@ static luaL_Reg l_luna_sound_module_fns[] = {
 // /////////////////////
 
 // luna.Sound:play([repeats:int = 0])) -- SPECIAL: -1 repeats = forever
-static int m_luna_sound_play(lua_State *L)
+static int luna_m_sound_play(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L, 1, LUNA_SOUND_MT);
 	// default is no repeats
@@ -2081,9 +2081,9 @@ static int m_luna_sound_play(lua_State *L)
 }
 
 // luna.Sound:play_timed(ms:int, [repeats:int = 0]) -- -1 repeats = forever
-static int m_luna_sound_play_timed(lua_State *L)
+static int luna_m_sound_play_timed(lua_State *L)
 {
-	// same implementation as m_luna_sound_play
+	// same implementation as luna_m_sound_play
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int ms = luaL_checkinteger(L,2);
 	int loops = luaL_optint(L,3,0);
@@ -2093,7 +2093,7 @@ static int m_luna_sound_play_timed(lua_State *L)
 }
 
 // luna.Sound:fade_in(fade_ms:int, [repeats:int = 0]) -- -1 loops forever
-static int m_luna_sound_fade_in(lua_State *L)
+static int luna_m_sound_fade_in(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int ms = luaL_checkinteger(L,2);
@@ -2104,7 +2104,7 @@ static int m_luna_sound_fade_in(lua_State *L)
 }
 
 // luna.Sound:fade_in_timed(f_ms:int, ms:int, [rpts:int=0]) -- -1 rpts=forever
-static int m_luna_sound_fade_in_timed(lua_State *L)
+static int luna_m_sound_fade_in_timed(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int fade_ms = luaL_checkinteger(L,2);
@@ -2115,7 +2115,7 @@ static int m_luna_sound_fade_in_timed(lua_State *L)
 	return 0;
 }
 // luna.Sound:pause()
-static int m_luna_sound_pause(lua_State *L)
+static int luna_m_sound_pause(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	// don't do anything if we never even started playing (channel = -1)
@@ -2126,7 +2126,7 @@ static int m_luna_sound_pause(lua_State *L)
 }
 
 // luna.Sound:resume()
-static int m_luna_sound_resume(lua_State *L)
+static int luna_m_sound_resume(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	// don't do anyting if we never started playing (channel = -1)
@@ -2137,7 +2137,7 @@ static int m_luna_sound_resume(lua_State *L)
 }
 
 // luna.Sound:volume() -> int
-static int m_luna_sound_volume(lua_State *L)
+static int luna_m_sound_volume(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	// return 0 if we never started playing (channel = -1)
@@ -2151,7 +2151,7 @@ static int m_luna_sound_volume(lua_State *L)
 }
 
 // luna.Sound:set_volume(vol: int)
-static int m_luna_sound_set_volume(lua_State *L)
+static int luna_m_sound_set_volume(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int vol = luaL_checkinteger(L,2);
@@ -2162,7 +2162,7 @@ static int m_luna_sound_set_volume(lua_State *L)
 	return 0;
 }
 // luna.Sound:halt()
-static int m_luna_sound_halt(lua_State *L)
+static int luna_m_sound_halt(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	if (s->channel != -1) {
@@ -2171,7 +2171,7 @@ static int m_luna_sound_halt(lua_State *L)
 	return 0;
 }
 // luna.Sound:halt_timed(ms: int)
-static int m_luna_sound_halt_timed(lua_State *L)
+static int luna_m_sound_halt_timed(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int ms = luaL_checkinteger(L,2);
@@ -2181,7 +2181,7 @@ static int m_luna_sound_halt_timed(lua_State *L)
 	return 0;
 }
 // luna.Sound:fade_out(ms: int)
-static int m_luna_sound_fade_out(lua_State *L)
+static int luna_m_sound_fade_out(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int ms = luaL_checkinteger(L,2);
@@ -2191,7 +2191,7 @@ static int m_luna_sound_fade_out(lua_State *L)
 	return 0;
 }
 // luna.Sound:is_playing() -> boolean
-static int m_luna_sound_is_playing(lua_State *L)
+static int luna_m_sound_is_playing(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	if (s->channel != -1) {
@@ -2203,7 +2203,7 @@ static int m_luna_sound_is_playing(lua_State *L)
 	return 1;
 }
 // luna.Sound:is_paused() -> boolean
-static int m_luna_sound_is_paused(lua_State *L)
+static int luna_m_sound_is_paused(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	if (s->channel != -1) {
@@ -2216,7 +2216,7 @@ static int m_luna_sound_is_paused(lua_State *L)
 }
 
 // luna.Sound:is_fading() -> is_fading:boolean, dir: 'in' | 'out'
-static int m_luna_sound_is_fading(lua_State *L)
+static int luna_m_sound_is_fading(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	if (s->channel != -1) {
@@ -2242,7 +2242,7 @@ static int m_luna_sound_is_fading(lua_State *L)
 }
 
 // luna.Sound:__gc() -- garbage collection
-static int m_luna_sound_gc(lua_State *L)
+static int luna_m_sound_gc(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	// make sure we stop playing before we free
@@ -2254,22 +2254,22 @@ static int m_luna_sound_gc(lua_State *L)
 }
 
 // metatable def
-static luaL_Reg m_luna_sound_metatable[] = {
-	{"play", &m_luna_sound_play},
-	{"play_timed", &m_luna_sound_play_timed},
-	{"fade_in", &m_luna_sound_fade_in},
-	{"fade_in_timed", &m_luna_sound_fade_in_timed},
-	{"pause", &m_luna_sound_pause},
-	{"resume", &m_luna_sound_resume},
-	{"volume", &m_luna_sound_volume},
-	{"set_volume", &m_luna_sound_set_volume},
-	{"halt", &m_luna_sound_halt},
-	{"halt_timed", &m_luna_sound_halt_timed},
-	{"fade_out", &m_luna_sound_fade_out},
-	{"is_playing", &m_luna_sound_is_playing},
-	{"is_paused", &m_luna_sound_is_paused},
-	{"is_fading", &m_luna_sound_is_fading},
-	{"__gc", &m_luna_sound_gc},
+static luaL_Reg luna_m_sound_metatable[] = {
+	{"play", &luna_m_sound_play},
+	{"play_timed", &luna_m_sound_play_timed},
+	{"fade_in", &luna_m_sound_fade_in},
+	{"fade_in_timed", &luna_m_sound_fade_in_timed},
+	{"pause", &luna_m_sound_pause},
+	{"resume", &luna_m_sound_resume},
+	{"volume", &luna_m_sound_volume},
+	{"set_volume", &luna_m_sound_set_volume},
+	{"halt", &luna_m_sound_halt},
+	{"halt_timed", &luna_m_sound_halt_timed},
+	{"fade_out", &luna_m_sound_fade_out},
+	{"is_playing", &luna_m_sound_is_playing},
+	{"is_paused", &luna_m_sound_is_paused},
+	{"is_fading", &luna_m_sound_is_fading},
+	{"__gc", &luna_m_sound_gc},
 	{NULL,NULL}
 };
 
@@ -2285,7 +2285,7 @@ int luaopen_luna(lua_State *L)
 	lua_pushliteral(L,"__index");
 	lua_pushvalue(L,-2);
 	lua_rawset(L,-3); // metatable.__index = metatable
-	luaL_setfuncs(L, m_luna_window_metatable, 0);
+	luaL_setfuncs(L, luna_m_window_metatable, 0);
 	lua_pop(L,1);
 
 	// set texture metatable
@@ -2293,7 +2293,7 @@ int luaopen_luna(lua_State *L)
 	lua_pushliteral(L,"__index");
 	lua_pushvalue(L,-2);
 	lua_rawset(L,-3); // metatable.__index = metatable
-	luaL_setfuncs(L, m_luna_texture_metatable, 0);
+	luaL_setfuncs(L, luna_m_texture_metatable, 0);
 	lua_pop(L,1);
 
 	// set music metatable
@@ -2301,7 +2301,7 @@ int luaopen_luna(lua_State *L)
 	lua_pushliteral(L,"__index");
 	lua_pushvalue(L,-2);
 	lua_rawset(L,-3); // metatable.__index = metatable
-	luaL_setfuncs(L, m_luna_music_metatable, 0);
+	luaL_setfuncs(L, luna_m_music_metatable, 0);
 	lua_pop(L,1);
 
 	// set sound metatable
@@ -2309,25 +2309,25 @@ int luaopen_luna(lua_State *L)
 	lua_pushliteral(L,"__index");
 	lua_pushvalue(L,-2);
 	lua_rawset(L,-3); // metatable.__index = metatable
-	luaL_setfuncs(L, m_luna_sound_metatable, 0);
+	luaL_setfuncs(L, luna_m_sound_metatable, 0);
 	lua_pop(L,1);
 
 	// add luna module
-	luaL_newlib(L, l_luna_module_fns);
+	luaL_newlib(L, luna_module_fns);
 	// add luna.event module
-	luaL_newlib(L, l_luna_event_module_fns);
+	luaL_newlib(L, luna_event_module_fns);
 	lua_setfield(L, -2, "event");
 	// add luna.window module functions
-	luaL_newlib(L, l_luna_window_module_fns);
+	luaL_newlib(L, luna_window_module_fns);
 	lua_setfield(L, -2, "window");
 	// add luna.texture module functions
-	luaL_newlib(L, l_luna_texture_module_fns);
+	luaL_newlib(L, luna_texture_module_fns);
 	lua_setfield(L, -2, "texture");
 	// add luna.music module functions
-	luaL_newlib(L, l_luna_music_module_fns);
+	luaL_newlib(L, luna_music_module_fns);
 	lua_setfield(L, -2, "music");
 	// add luna.sound module functions
-	luaL_newlib(L, l_luna_sound_module_fns);
+	luaL_newlib(L, luna_sound_module_fns);
 	lua_setfield(L, -2, "sound");
 
 	return 1; // return our library
