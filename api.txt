@@ -7,6 +7,11 @@ luna = {
 		function poll() -> type:string, event:table
 	}
 
+	module keyboard = {
+		function key_down(key:string) -> boolean
+		function mod_down(mod:string) -> boolean
+	}
+
 	module window = {
 		function new(w:int, h:int, fullscreen:boolean) -> luna.Window
 	}

@@ -20,6 +20,8 @@ static const char *LUNA_SOUND_MT = "luna.Sound";
 static const char *LUNA_MUSIC_MT = "luna.Music";
 static const char *LUNA_SDLK_TO_STR_TBL = "luna.sdlk_to_str";
 static const char *LUNA_STR_TO_SDLK_TBL = "luna.str_to_sdlk";
+static const char *LUNA_KEYMOD_TO_STR_TBL = "luna.keymod_to_str";
+static const char *LUNA_STR_TO_KEYMOD_TBL = "luna.str_to_keymod";
 
 // ////////////////////////
 // Structure definitions //
@@ -49,6 +51,10 @@ typedef struct luna_Music {
 	Mix_Music *music;
 } luna_Music;
 
+// /////////////////////
+// SDL Keyboard state //
+// /////////////////////
+const Uint8 *KEYBOARD_STATE;
 
 // ///////////////////
 // luna.* functions //
@@ -113,7 +119,6 @@ static const luaL_Reg luna_module_fns[] = {
 // luna.event code //
 // //////////////////
 
-// 
 static void lh_luna_init_keymaps(lua_State *L)
 {
 	// SDLK_* const-> string
@@ -1509,6 +1514,156 @@ static const luaL_Reg luna_event_module_fns[] = {
 	{NULL,NULL}
 };
 
+
+// ////////////////////////////
+// luna.keyboard.* functions //
+// ////////////////////////////
+
+static int lh_luna_init_keymod_table(lua_State *L)
+{
+	// str->kmod
+	lua_newtable(L);
+	// kmod->str
+	lua_newtable(L);
+
+	// KMOD_NONE
+	lua_pushliteral(L,"none");
+	lua_pushinteger(L,KMOD_NONE);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"none");
+	lua_rawseti(L,-3,KMOD_NONE);
+	// KMOD_LSHIFT
+	lua_pushliteral(L,"lshift");
+	lua_pushinteger(L,KMOD_LSHIFT);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"lshift");
+	lua_rawseti(L,-3,KMOD_LSHIFT);
+	// KMOD_RSHIFT
+	lua_pushliteral(L,"rshift");
+	lua_pushinteger(L,KMOD_RSHIFT);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"rshift");
+	lua_rawseti(L,-3,KMOD_RSHIFT);
+	// KMOD_LCTRL
+	lua_pushliteral(L,"lctrl");
+	lua_pushinteger(L,KMOD_LCTRL);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"lctrl");
+	lua_rawseti(L,-3,KMOD_LCTRL);
+	// KMOD_RCTRL
+	lua_pushliteral(L,"rctrl");
+	lua_pushinteger(L,KMOD_RCTRL);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"rctrl");
+	lua_rawseti(L,-3,KMOD_RCTRL);
+	// KMOD_LALT
+	lua_pushliteral(L,"lalt");
+	lua_pushinteger(L,KMOD_LALT);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"lalt");
+	lua_rawseti(L,-3,KMOD_LALT);
+	// KMOD_RALT
+	lua_pushliteral(L,"ralt");
+	lua_pushinteger(L,KMOD_RALT);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"ralt");
+	lua_rawseti(L,-3,KMOD_RALT);
+	// KMOD_LGUI
+	lua_pushliteral(L,"lgui");
+	lua_pushinteger(L,KMOD_LGUI);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"lgui");
+	lua_rawseti(L,-3,KMOD_LGUI);
+	// KMOD_RGUI
+	lua_pushliteral(L,"rgui");
+	lua_pushinteger(L,KMOD_RGUI);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"rgui");
+	lua_rawseti(L,-3,KMOD_RGUI);
+	// KMOD_NUM
+	lua_pushliteral(L,"num");
+	lua_pushinteger(L,KMOD_NUM);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"num");
+	lua_rawseti(L,-3,KMOD_NUM);
+	// KMOD_CAPS
+	lua_pushliteral(L,"caps");
+	lua_pushinteger(L,KMOD_CAPS);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"caps");
+	lua_rawseti(L,-3,KMOD_CAPS);
+	// KMOD_MODE
+	lua_pushliteral(L,"mode");
+	lua_pushinteger(L,KMOD_MODE);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"mode");
+	lua_rawseti(L,-3,KMOD_MODE);
+	// KMOD_CTRL
+	lua_pushliteral(L,"ctrl");
+	lua_pushinteger(L,KMOD_CTRL);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"ctrl");
+	lua_rawseti(L,-3,KMOD_CTRL);
+	// KMOD_SHIFT
+	lua_pushliteral(L,"shift");
+	lua_pushinteger(L,KMOD_SHIFT);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"shift");
+	lua_rawseti(L,-3,KMOD_SHIFT);
+	// KMOD_ALT
+	lua_pushliteral(L,"alt");
+	lua_pushinteger(L,KMOD_ALT);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"alt");
+	lua_rawseti(L,-3,KMOD_ALT);
+	// KMOD_GUI
+	lua_pushliteral(L,"gui");
+	lua_pushinteger(L,KMOD_GUI);
+	lua_rawset(L,-3);
+	lua_pushliteral(L,"gui");
+	lua_rawseti(L,-3,KMOD_GUI);
+
+	lua_setfield(L, LUA_REGISTRYINDEX, LUNA_STR_TO_KEYMOD_TBL);
+	lua_setfield(L, LUA_REGISTRYINDEX, LUNA_KEYMOD_TO_STR_TBL);
+	return 0;
+}
+
+// luna.keyboard.key_down(key:key_string) -> boolean
+static int luna_keyboard_key_down(lua_State *L)
+{
+	const char *keystr = luaL_checkstring(L, 1);
+
+	lua_pushstring(L, LUNA_STR_TO_SDLK_TBL); // key, tblnm
+	lua_gettable(L, LUA_REGISTRYINDEX); // key, tbl
+	lua_pushstring(L, keystr); // key, tbl, key
+	lua_gettable(L, -2); // key, tbl, sdlk
+	// get the sdlk constant
+	int sdlk = lua_tointeger(L, -1);
+	int sc = SDL_GetScancodeFromKey(sdlk);
+	lua_pushboolean(L, KEYBOARD_STATE[sc]);
+	return 1;
+}
+
+// luna.keyboard.mod_down(mod:mod_string) -> boolean
+static int luna_keyboard_mod_down(lua_State *L)
+{
+	const char *modstr = luaL_checkstring(L, 1);
+	lua_pushstring(L, LUNA_STR_TO_KEYMOD_TBL);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushstring(L, modstr);
+	lua_gettable(L, -2);
+	int mod = lua_tointeger(L,-1);
+	int ret = mod & SDL_GetModState();
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
+static luaL_Reg luna_keyboard_module_fns[] = {
+	{"key_down", &luna_keyboard_key_down},
+	{"mod_down", &luna_keyboard_mod_down},
+	{NULL,NULL}
+};
+
 // //////////////////////////////////
 // luna.window.* functions/methods //
 // //////////////////////////////////
@@ -2280,6 +2435,8 @@ int luaopen_luna(lua_State *L)
 {
 	// init keymap tables
 	lh_luna_init_keymaps(L);
+	lh_luna_init_keymod_table(L);
+	KEYBOARD_STATE = SDL_GetKeyboardState(NULL);
 	// set window metatable
 	luaL_newmetatable(L,LUNA_WINDOW_MT);
 	lua_pushliteral(L,"__index");
@@ -2329,6 +2486,9 @@ int luaopen_luna(lua_State *L)
 	// add luna.sound module functions
 	luaL_newlib(L, luna_sound_module_fns);
 	lua_setfield(L, -2, "sound");
+	// add luna.keyboard module functions
+	luaL_newlib(L, luna_keyboard_module_fns);
+	lua_setfield(L, -2, "keyboard");
 
 	return 1; // return our library
 }
