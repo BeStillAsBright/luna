@@ -72,7 +72,10 @@ static int luna_init(lua_State *L)
 		lua_error(L);
 	}
 
-	int mixflags = MIX_INIT_FLAC | MIX_INIT_OGG | MIX_INIT_MP3;
+	int mixflags = MIX_INIT_FLAC | MIX_INIT_OGG;
+#ifdef LUNA_USE_MP3
+	mixflags |= MIX_INIT_MP3;
+#endif // LUNA_USE_MP3
 	int mixinitted = Mix_Init(mixflags);
 	if ((mixinitted&mixflags) != mixflags) {
 		lua_pushfstring(L, "luna.init-Mix_Init: %s\n", Mix_GetError());
