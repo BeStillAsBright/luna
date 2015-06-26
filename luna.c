@@ -1000,7 +1000,7 @@ static void lh_luna_init_keymaps(lua_State *L)
 	lua_rawset(L,-3);
 	lua_pushliteral(L,"undo");
 	lua_rawseti(L,-3,SDLK_UNDO);
-	
+
 	lua_setfield(L, LUA_REGISTRYINDEX, LUNA_STR_TO_SDLK_TBL);
 	lua_setfield(L, LUA_REGISTRYINDEX, LUNA_SDLK_TO_STR_TBL);
 }
@@ -1358,20 +1358,39 @@ static void lh_luna_make_window_event(lua_State *L, SDL_Event *e)
 	lua_pushinteger(L,e->window.windowID);
 	lua_setfield(L,-2,"window_id");
 	// type (and data)
+	// XXX to change from lua5.2 to lua5.1 we change
+	// XXX -----------------
+	// XXX lua_copy(L,-1,-3)
+	// XXX -----------------
+	// XXX into:
+	// XXX --------------------
+	// XXX lua_pushvalue(L,-1);
+	// XXX lua_replace(L,-4);
+	// XXX --------------------
+	// XXX because replace pops the top element, so we need to put 
+	// XXX a copy on top to ensure a similar state and adjust the replace
+	// XXX index to one further to compensate for the additional copy
+	// XXX of the top element.
 	switch (e->window.event) {
 		case SDL_WINDOWEVENT_SHOWN:
 			lua_pushliteral(L,"window_shown");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_HIDDEN:
 			lua_pushliteral(L,"window_hidden");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_EXPOSED:
 			lua_pushliteral(L,"window_exposed");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_MOVED:
@@ -1380,7 +1399,9 @@ static void lh_luna_make_window_event(lua_State *L, SDL_Event *e)
 			lua_pushinteger(L,e->window.data2);
 			lua_setfield(L,-2,"y");
 			lua_pushliteral(L,"window_moved");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_RESIZED:
@@ -1389,47 +1410,65 @@ static void lh_luna_make_window_event(lua_State *L, SDL_Event *e)
 			lua_pushinteger(L,e->window.data2);
 			lua_setfield(L,-2,"h");
 			lua_pushliteral(L,"window_resized");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_MINIMIZED:
 			lua_pushliteral(L,"window_minimized");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_MAXIMIZED:
 			lua_pushliteral(L,"window_maximized");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_RESTORED:
 			lua_pushliteral(L,"window_restored");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_ENTER:
 			lua_pushliteral(L,"window_enter");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_LEAVE:
 			lua_pushliteral(L,"window_leave");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
 			lua_pushliteral(L,"window_focus_gained");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			lua_pushliteral(L,"window_focus_lost");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 		case SDL_WINDOWEVENT_CLOSE:
 			lua_pushliteral(L,"window_close");
-			lua_copy(L,-1,-3);
+			//lua_copy(L,-1,-3);
+			lua_pushvalue(L,-1);
+			lua_replace(L,-4);
 			lua_setfield(L,-2,"type");
 			break;
 	}
