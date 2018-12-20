@@ -33,16 +33,43 @@ function main()
 	win:show()
 	while true do
 		etype, event = luna.event.poll()
+		if luna.keyboard.key_down('return') then
+			break
+		end
 		if etype == 'key_down' then
 			key = event.key
 			if key == 'w' then
-				my_smile:move(0,-5)
+				local x = 0
+				local y = -5
+				if luna.keyboard.mod_down('shift') then
+					x = -x
+					y = -y
+				end
+				my_smile:move(x,y)
 			elseif key == 's' then
-				my_smile:move(0,5)
+				local x = 0
+				local y = 5
+				if luna.keyboard.mod_down('shift') then
+					x = -x
+					y = -y
+				end
+				my_smile:move(x,y)
 			elseif key == 'a' then
-				my_smile:move(-5,0)
+				local x = -5
+				local y = 0
+				if luna.keyboard.mod_down('shift') then
+					x = -x
+					y = -y
+				end
+				my_smile:move(x,y)
 			elseif key == 'd' then
-				my_smile:move(5,0)
+				local x = 5
+				local y = 0
+				if luna.keyboard.mod_down('shift') then
+					x = -x
+					y = -y
+				end
+				my_smile:move(x,y)
 			elseif key == 'escape' then
 				break
 			end
