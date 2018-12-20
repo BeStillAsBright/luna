@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include <lua.h>
-#include <lauxlib.h>
+#include <lua/lua.h>
+#include <lua/lauxlib.h>
 
 // we need this since we're not defining a main() function.
 // if we didn't #define this, SDL would try to #define main SDL_main
@@ -66,7 +66,8 @@ static int luna_init(lua_State *L)
 		lua_error(L);
 	}
 
-	int mixflags = MIX_INIT_FLAC | MIX_INIT_OGG | MIX_INIT_MP3;
+	//int mixflags = MIX_INIT_FLAC | MIX_INIT_OGG | MIX_INIT_MP3;
+	int mixflags = MIX_INIT_OGG;
 	int mixinitted = Mix_Init(mixflags);
 	if ((mixinitted&mixflags) != mixflags) {
 		lua_pushfstring(L, "luna.init-Mix_Init: %s\n", Mix_GetError());
@@ -113,7 +114,7 @@ static const luaL_Reg luna_module_fns[] = {
 // luna.event code //
 // //////////////////
 
-// 
+//
 static void lh_luna_init_keymaps(lua_State *L)
 {
 	// SDLK_* const-> string
@@ -992,7 +993,7 @@ static void lh_luna_init_keymaps(lua_State *L)
 	lua_rawset(L,-3);
 	lua_pushliteral(L,"undo");
 	lua_rawseti(L,-3,SDLK_UNDO);
-	
+
 	lua_setfield(L, LUA_REGISTRYINDEX, LUNA_STR_TO_SDLK_TBL);
 	lua_setfield(L, LUA_REGISTRYINDEX, LUNA_SDLK_TO_STR_TBL);
 }
@@ -1097,7 +1098,7 @@ static void lh_luna_make_mouse_motion_event(lua_State *L, SDL_Event *e)
 	// set x_rel field
 	lua_pushinteger(L, e->motion.xrel);
 	lua_setfield(L,-2,"x_rel");
-	
+
 	// set y_rel field
 	lua_pushinteger(L, e->motion.yrel);
 	lua_setfield(L,-2,"y_rel");
@@ -1156,11 +1157,11 @@ static void lh_luna_make_mouse_button_event(lua_State *L, SDL_Event *e)
 		lua_pushliteral(L,"released");
 	}
 	lua_setfield(L,-2,"state");
-	
+
 	// x field
 	lua_pushinteger(L,e->button.x);
 	lua_setfield(L,-2,"x");
-	
+
 	// y field
 	lua_pushinteger(L,e->button.y);
 	lua_setfield(L,-2,"y");
@@ -1169,7 +1170,7 @@ static void lh_luna_make_mouse_button_event(lua_State *L, SDL_Event *e)
 static void lh_luna_make_mouse_wheel_event(lua_State *L, SDL_Event *e)
 {
 	lua_newtable(L);
-	
+
 	// timestamp
 	lua_pushinteger(L, e->wheel.timestamp);
 	lua_setfield(L,-2,"timestamp");
@@ -1328,11 +1329,11 @@ static void lh_luna_make_controller_device_event(lua_State *L, SDL_Event *e)
 			break;
 	}
 	lua_setfield(L,-2,"type");
-	
+
 	// timestamp
 	lua_pushinteger(L,e->cdevice.timestamp);
 	lua_setfield(L,-2,"timestamp");
-	
+
 	// controller_id
 	lua_pushinteger(L,e->cdevice.which);
 	lua_setfield(L,-2,"controller_id");
@@ -1526,7 +1527,7 @@ static int luna_c_window_new(lua_State *L)
 	if (fs) {
 		win_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
-	int err = SDL_CreateWindowAndRenderer(w, h, 
+	int err = SDL_CreateWindowAndRenderer(w, h,
 			win_flags, &win->window, &win->renderer);
 
 	if (err) {
@@ -1568,7 +1569,7 @@ static int luna_m_window_close(lua_State *L)
 
 //  luna.Window:draw(tex: luna.Texture, x:int, y:int)
 //  	stages drawing; need to paint to actually display
-static int luna_m_window_draw(lua_State *L) 
+static int luna_m_window_draw(lua_State *L)
 {
 	luna_Window *win = luaL_checkudata(L,1,LUNA_WINDOW_MT);
 	luna_Texture *tex = luaL_checkudata(L,2,LUNA_TEXTURE_MT);
@@ -1576,7 +1577,7 @@ static int luna_m_window_draw(lua_State *L)
 	int y = luaL_checkinteger(L,4);
 
 	SDL_Rect dst = (SDL_Rect) {.x = x, .y = y, .w = tex->raw_w, .h = tex->raw_h};
-	
+
 	if (tex->is_framed) {
 		dst.w = tex->frame.w;
 		dst.h = tex->frame.h;
@@ -1713,7 +1714,7 @@ static int luna_m_texture_set_frame(lua_State *L)
 	luna_Texture *t = luaL_checkudata(L,1,LUNA_TEXTURE_MT);
 	// see if we got a table or 4 ints; 2 args = table, 5 args = ints
 	int nargs = lua_gettop(L);
-	
+
 	// table version
 	if (nargs == 2) {
 		luaL_checktype(L,2,LUA_TTABLE);
@@ -1721,7 +1722,7 @@ static int luna_m_texture_set_frame(lua_State *L)
 		lua_getfield(L,2,"x");
 		t->frame.x = lua_tointeger(L,-1);
 		lua_pop(L,1);
-		
+
 		lua_getfield(L,2,"y");
 		t->frame.y = lua_tointeger(L,-1);
 		lua_pop(L,1);
@@ -1919,7 +1920,7 @@ static luaL_Reg luna_music_module_fns[] = {
 static int luna_m_music_play(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
-	int loops = luaL_optint(L,2,-1); // loop forever if no argument
+	int loops = luaL_optinteger(L,2,-1); // loop forever if no argument
 	Mix_PlayMusic(m->music, loops);
 	return 0;
 }
@@ -1929,7 +1930,7 @@ static int luna_m_play_from(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	double pos = luaL_checknumber(L,2);
-	int loops = luaL_optint(L,3,-1);
+	int loops = luaL_optinteger(L,3,-1);
 	Mix_FadeInMusicPos(m->music,loops,0,pos);
 	return 0;
 }
@@ -1939,7 +1940,7 @@ static int luna_m_music_fade_in(lua_State *L)
 {
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	int ms = luaL_checkinteger(L,2);
-	int loops = luaL_optint(L,3,-1);
+	int loops = luaL_optinteger(L,3,-1);
 	Mix_FadeInMusic(m->music, loops, ms);
 	return 0;
 }
@@ -1950,7 +1951,7 @@ static int luna_m_music_fade_in_from(lua_State *L)
 	luna_Music *m = luaL_checkudata(L,1,LUNA_MUSIC_MT);
 	double pos = luaL_checknumber(L,2);
 	int ms = luaL_checkinteger(L,3);
-	int loops = luaL_optint(L,4,-1);
+	int loops = luaL_optinteger(L,4,-1);
 	Mix_FadeInMusicPos(m->music, loops, ms, pos);
 	return 0;
 }
@@ -2071,7 +2072,7 @@ static int luna_m_sound_play(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L, 1, LUNA_SOUND_MT);
 	// default is no repeats
-	int loops = luaL_optint(L, 2, 0); 
+	int loops = luaL_optinteger(L, 2, 0);
 	// we can just use s->channel here because it's initially set to -1
 	// so we automatically play on an unreserved channel. Then we store the
 	// channel we actually used in our userdata so Sound:pause() etc. works.
@@ -2086,7 +2087,7 @@ static int luna_m_sound_play_timed(lua_State *L)
 	// same implementation as luna_m_sound_play
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int ms = luaL_checkinteger(L,2);
-	int loops = luaL_optint(L,3,0);
+	int loops = luaL_optinteger(L,3,0);
 	int chan = Mix_PlayChannelTimed(s->channel, s->chunk, loops, ms);
 	s->channel = chan;
 	return 0;
@@ -2097,7 +2098,7 @@ static int luna_m_sound_fade_in(lua_State *L)
 {
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int ms = luaL_checkinteger(L,2);
-	int loops = luaL_optint(L,3,0);
+	int loops = luaL_optinteger(L,3,0);
 	int chan = Mix_FadeInChannel(s->channel, s->chunk, loops, ms);
 	s->channel = chan;
 	return 0;
@@ -2109,7 +2110,7 @@ static int luna_m_sound_fade_in_timed(lua_State *L)
 	luna_Sound *s = luaL_checkudata(L,1,LUNA_SOUND_MT);
 	int fade_ms = luaL_checkinteger(L,2);
 	int ms = luaL_checkinteger(L,3);
-	int loops = luaL_optint(L,4,0);
+	int loops = luaL_optinteger(L,4,0);
 	int chan = Mix_FadeInChannelTimed(s->channel, s->chunk, loops, fade_ms, ms);
 	s->channel = chan;
 	return 0;
@@ -2332,4 +2333,3 @@ int luaopen_luna(lua_State *L)
 
 	return 1; // return our library
 }
-

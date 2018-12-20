@@ -1,5 +1,5 @@
 CC=clang
-LDFLAGS=-lSDL2 -lSDL2_mixer -lSDL2_image -llua
+LDFLAGS=-lSDL2 -lSDL2_mixer -lSDL2_image -llua 
 
 
 all: luna.so
